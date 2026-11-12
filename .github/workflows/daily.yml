@@ -41,13 +41,16 @@ jobs:
 
       - name: Remove previously generated results
         # The repo holds an old copy of some outputs; publish only what this run builds.
-        run: rm -f output/*.csv output/*.html
+        run: rm -f output/*.csv output/*.html output/*.json
 
       - name: Fetch prices
         run: python scripts/fetch_prices.py
 
       - name: Fetch regime data
         run: python scripts/fetch_regime.py
+
+      - name: Build market environment signal
+        run: python scripts/environment.py
 
       - name: Rank sectors
         run: python scripts/rank_sectors.py

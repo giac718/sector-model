@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-11",
+  "label": "Risk-on",
+  "warnings_on": 0,
+  "volatility_band": "Normal",
+  "posture": "Normal position size. Favor calls in leading sectors.",
+  "warnings": [
+    {
+      "id": "spy_below_sma200",
+      "name": "SPY below its 200-day average",
+      "on": false,
+      "text": "SPY 759.81, above its 200-day average of 728.65",
+      "values": {
+        "spy": 759.81,
+        "spy_sma200": 728.6512
+      }
+    },
+    {
+      "id": "credit_widening",
+      "name": "Credit spread widening",
+      "on": false,
+      "text": "Credit spread 1.51, up 0.05 from 1.46 21 trading days ago (warning above +0.15)",
+      "values": {
+        "credit_spread": 1.51,
+        "credit_spread_21d_ago": 1.46,
+        "change": 0.05
+      }
+    },
+    {
+      "id": "vix_above_20",
+      "name": "VIX above 20",
+      "on": false,
+      "text": "VIX 17.5, below 20",
+      "values": {
+        "vix": 17.49
+      }
+    },
+    {
+      "id": "vix_above_vix3m",
+      "name": "VIX above 3-month VIX",
+      "on": false,
+      "text": "VIX 17.5, below 3-month VIX 19.2",
+      "values": {
+        "vix": 17.49,
+        "vix3m": 19.24
+      }
+    }
+  ],
+  "series_as_of": {
+    "spy": "2026-11-11",
+    "credit_spread": "2026-11-09",
+    "vix": "2026-11-11",
+    "vix3m": "2026-11-11"
+  }
+}

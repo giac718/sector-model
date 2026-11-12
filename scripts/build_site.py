@@ -5,6 +5,7 @@ stock tables for the top 3 ranked sectors. Reads output/ranks_today.csv and
 output/stocks_<TICKER>.csv, so run rank_sectors.py and sector_stocks.py first.
 """
 
+import json
 import sys
 from datetime import datetime
 from html import escape
@@ -16,6 +17,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = PROJECT_ROOT / "output"
 RANKS_PATH = OUTPUT_DIR / "ranks_today.csv"
+ENVIRONMENT_PATH = OUTPUT_DIR / "environment_today.json"
 PRICES_PATH = PROJECT_ROOT / "data" / "prices.csv"
 DASHBOARD_NAME = "dashboard.html"
 INDEX_PATH = OUTPUT_DIR / "index.html"
@@ -56,6 +58,41 @@ th:nth-child(-n+2), td:nth-child(-n+2), td.name, th.name { text-align: left; }
 th { border-bottom: 2px solid GrayText; }
 td { border-bottom: 1px solid color-mix(in srgb, GrayText 30%, transparent); }
 td.name { white-space: normal; }
+.env {
+  border: 1px solid GrayText;
+  border-left: 0.5rem solid var(--env-color);
+  border-radius: 0.4rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.env-risk-on { --env-color: #1a7f37; --env-text: #ffffff; }
+.env-caution { --env-color: #f0a500; --env-text: #1a1a1a; }
+.env-risk-off { --env-color: #c02b2b; --env-text: #ffffff; }
+.env-heading { margin: 0 0 0.4rem; font-size: 0.9rem; color: GrayText; }
+.env-label {
+  display: inline-block;
+  padding: 0.15rem 0.7rem;
+  border-radius: 0.3rem;
+  background: var(--env-color);
+  color: var(--env-text);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.env-band { margin-left: 0.5rem; white-space: nowrap; }
+.env-posture { margin: 0.6rem 0; font-weight: 600; }
+.env ul { list-style: none; margin: 0.6rem 0 0.4rem; padding: 0; }
+.env li { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.2rem 0; }
+.env .state {
+  flex: none;
+  width: 2.4rem;
+  text-align: center;
+  border: 1px solid GrayText;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.env .state.on { background: #c02b2b; border-color: #c02b2b; color: #ffffff; }
+.env .note { margin: 0.4rem 0 0; }
 .button {
   display: inline-block;
   margin: 0.5rem 0;
@@ -152,6 +189,38 @@ def stocks_section(sector: str, rank: int) -> str:
     )
 
 
+def environment_section() -> str:
+    """The market environment box, from output/environment_today.json."""
+    if not ENVIRONMENT_PATH.exists():
+        raise RuntimeError(
+            f"{ENVIRONMENT_PATH} not found. Run scripts/environment.py first."
+        )
+    env = json.loads(ENVIRONMENT_PATH.read_text(encoding="utf-8"))
+
+    css_class = "env-" + env["label"].lower().replace(" ", "-")
+    items = []
+    for warning in env["warnings"]:
+        state = '<span class="state on">ON</span>' if warning["on"] else '<span class="state">off</span>'
+        items.append(f"<li>{state}<span>{escape(warning['text'])}</span></li>")
+    as_of = ", ".join(
+        f"{escape(name.replace('_', ' '))} {escape(day)}"
+        for name, day in env["series_as_of"].items()
+    )
+    return (
+        f'<section class="env {css_class}">\n'
+        f'<p class="env-heading">Market environment, as of the {escape(env["date"])} close</p>\n'
+        f'<p><span class="env-label">{escape(env["label"])}</span>'
+        f'<span class="env-band">Volatility: {escape(env["volatility_band"])}</span></p>\n'
+        f'<p class="env-posture">{escape(env["posture"])}</p>\n'
+        f'<ul aria-label="Warnings ({env["warnings_on"]} of {len(env["warnings"])} on)">\n'
+        + "\n".join(items)
+        + "\n</ul>\n"
+        f'<p class="note">{env["warnings_on"]} of {len(env["warnings"])} warnings on. '
+        f"Data as of: {as_of}.</p>\n"
+        "</section>"
+    )
+
+
 def prices_through() -> str | None:
     """Date of the last price row, if the price file is available."""
     if not PRICES_PATH.exists():
@@ -191,6 +260,7 @@ def build_page() -> str:
 <style>{STYLE}</style>
 </head>
 <body>
+{environment_section()}
 <h1>Sector rotation</h1>
 <p class="meta">{meta}</p>
 <p><a class="button" href="{DASHBOARD_NAME}">Open the dashboard</a></p>

@@ -21,6 +21,7 @@ SERIES = {
     "BAA10Y": "credit_spread",     # Moody's Baa corporate yield minus 10-year Treasury
     "T10Y2Y": "curve_10y2y",       # 10-year minus 2-year Treasury yield
     "VIXCLS": "vix",               # VIX
+    "VXVCLS": "vix3m",             # CBOE 3-month volatility index
     "DTWEXBGS": "dollar",          # broad US dollar index
 }
 START = "2018-01-01"
