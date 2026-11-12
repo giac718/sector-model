@@ -18,6 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = PROJECT_ROOT / "output"
 RANKS_PATH = OUTPUT_DIR / "ranks_today.csv"
 ENVIRONMENT_PATH = OUTPUT_DIR / "environment_today.json"
+STATUS_PATH = OUTPUT_DIR / "sector_status_today.json"
 PRICES_PATH = PROJECT_ROOT / "data" / "prices.csv"
 DASHBOARD_NAME = "dashboard.html"
 INDEX_PATH = OUTPUT_DIR / "index.html"
@@ -37,6 +38,14 @@ SECTOR_NAMES = {
     "XLU": "Utilities",
     "XLRE": "Real Estate",
     "XLC": "Communication Services",
+}
+
+# Status label -> guidance line, in display order
+STATUS_GUIDANCE = {
+    "Leading": "Look for longs here",
+    "Improving": "Early rotation, watch for entries",
+    "Weakening": "Tighten stops, no new longs",
+    "Lagging": "Avoid longs, puts candidates",
 }
 
 STYLE = """
@@ -93,6 +102,8 @@ td.name { white-space: normal; }
 }
 .env .state.on { background: #c02b2b; border-color: #c02b2b; color: #ffffff; }
 .env .note { margin: 0.4rem 0 0; }
+.status h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
+.status .guidance { margin: 0.1rem 0 0.3rem; font-weight: 600; }
 .button {
   display: inline-block;
   margin: 0.5rem 0;
@@ -221,6 +232,54 @@ def environment_section() -> str:
     )
 
 
+def status_section() -> str:
+    """Sectors grouped by status label, from output/sector_status_today.json."""
+    if not STATUS_PATH.exists():
+        raise RuntimeError(f"{STATUS_PATH} not found. Run scripts/sector_status.py first.")
+    status = json.loads(STATUS_PATH.read_text(encoding="utf-8"))
+
+    groups = []
+    for label, guidance in STATUS_GUIDANCE.items():
+        members = [s for s in status["sectors"] if s["label"] == label]
+        members.sort(key=lambda s: s["rel_score"], reverse=True)
+        heading = (
+            f"<h3>{escape(label)} ({len(members)})</h3>\n"
+            f'<p class="guidance">{escape(guidance)}</p>\n'
+        )
+        if not members:
+            groups.append(heading + '<p class="note">No sectors today.</p>')
+            continue
+        rows = [
+            [
+                escape(s["sector"]),
+                escape(SECTOR_NAMES.get(s["sector"], "")),
+                signed(s["score"]),
+                signed(s["rel_score"]),
+                signed(s["change"]),
+                f"{s['days_in_label']}d",
+            ]
+            for s in members
+        ]
+        groups.append(
+            heading + html_table(
+                ["ETF", "Sector", "Score", "Rel", "Change", "Held"], rows, name_column=1
+            )
+        )
+
+    return (
+        '<section class="status">\n'
+        "<h2>Sector status</h2>\n"
+        f'<p class="note">As of the {escape(status["date"])} close. Score is the average '
+        "1, 3 and 6-month return relative to SPY. Rel is the score minus the average "
+        "score of all sectors, and Change is Rel versus "
+        f'{status["change_days"]} trading days earlier (all in percentage points). '
+        "Labels come from Rel and Change. Held is how many trading days in a row "
+        "the sector has had its label.</p>\n"
+        + "\n".join(groups)
+        + "\n</section>"
+    )
+
+
 def prices_through() -> str | None:
     """Date of the last price row, if the price file is available."""
     if not PRICES_PATH.exists():
@@ -260,9 +319,10 @@ def build_page() -> str:
 <style>{STYLE}</style>
 </head>
 <body>
-{environment_section()}
 <h1>Sector rotation</h1>
 <p class="meta">{meta}</p>
+{environment_section()}
+{status_section()}
 <p><a class="button" href="{DASHBOARD_NAME}">Open the dashboard</a></p>
 {chr(10).join(sections)}
 </body>

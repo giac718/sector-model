@@ -55,6 +55,9 @@ jobs:
       - name: Rank sectors
         run: python scripts/rank_sectors.py
 
+      - name: Label sector status
+        run: python scripts/sector_status.py
+
       - name: Build rank history
         run: python scripts/rank_history.py
 
