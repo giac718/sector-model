@@ -21,9 +21,17 @@ SECTORS = [
 ]
 # Column label -> lookback in trading days
 WINDOWS = {"1m": 21, "3m": 63, "6m": 126}
+# Rows of prices needed to measure the longest window
+ROWS_NEEDED = max(WINDOWS.values()) + 1
 
 
-def load_prices() -> pd.DataFrame:
+def load_prices(complete_rows_only: bool = True) -> pd.DataFrame:
+    """Load the price table indexed by date.
+
+    By default only days where every ticker has a price are kept, so all
+    returns are measured between the same two dates. Pass False to keep
+    every day (callers then decide which sectors have enough history).
+    """
     if not PRICES_PATH.exists():
         raise RuntimeError(
             f"{PRICES_PATH} not found. Run scripts/fetch_prices.py first."
@@ -35,24 +43,28 @@ def load_prices() -> pd.DataFrame:
     if missing:
         raise RuntimeError(f"Missing tickers in {PRICES_PATH.name}: {missing}")
 
-    # Only keep days where every ticker has a price, so all returns are
-    # measured between the same two dates.
-    prices = prices[[BENCHMARK, *SECTORS]].dropna()
+    prices = prices[[BENCHMARK, *SECTORS]]
+    if complete_rows_only:
+        prices = prices.dropna()
 
-    needed = max(WINDOWS.values()) + 1
-    if len(prices) < needed:
+    if len(prices) < ROWS_NEEDED:
         raise RuntimeError(
-            f"Need at least {needed} complete rows of prices, found {len(prices)}."
+            f"Need at least {ROWS_NEEDED} rows of prices, found {len(prices)}."
         )
     return prices
 
 
-def rank_sectors(prices: pd.DataFrame) -> pd.DataFrame:
-    """Return the ranked table, with relative returns and score in percent."""
-    table = pd.DataFrame(index=pd.Index(SECTORS, name="Sector"))
+def rank_sectors(prices: pd.DataFrame, sectors: list[str] = SECTORS) -> pd.DataFrame:
+    """Return the ranked table, with relative returns and score in percent.
+
+    Scores are measured as of the last row of `prices`, so passing a table
+    truncated at some date gives the ranking as of that date. `sectors`
+    limits the ranking to a subset (ranks then run 1 to len(sectors)).
+    """
+    table = pd.DataFrame(index=pd.Index(sectors, name="Sector"))
     for label, days in WINDOWS.items():
         returns = prices.iloc[-1] / prices.iloc[-1 - days] - 1
-        table[label] = (returns[SECTORS] - returns[BENCHMARK]) * 100
+        table[label] = (returns[sectors] - returns[BENCHMARK]) * 100
 
     table["Score"] = table[list(WINDOWS)].mean(axis=1)
     table["Rank"] = table["Score"].rank(ascending=False, method="first").astype(int)
