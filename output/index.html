@@ -61,6 +61,13 @@ td.name { white-space: normal; }
 .status h3, .setups h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
 .setups h3 + .note { margin: 0.1rem 0 0.3rem; }
 .setups .table-wrap + .note { margin: 0.3rem 0 0; }
+.earn-soon {
+  padding: 0 0.3rem;
+  border-radius: 0.3rem;
+  background: #f0a500;
+  color: #1a1a1a;
+  font-weight: 600;
+}
 .tag {
   display: inline-block;
   margin-left: 0.3rem;
@@ -84,7 +91,7 @@ td.name { white-space: normal; }
 </head>
 <body>
 <h1>Sector rotation</h1>
-<p class="meta">Run date: Thursday, November 12, 2026 (14:29 US Eastern)<br>Prices through the 2026-11-11 close</p>
+<p class="meta">Run date: Thursday, November 12, 2026 (14:37 US Eastern)<br>Prices through the 2026-11-11 close</p>
 <section class="env env-risk-on">
 <p class="env-heading">Market environment, as of the 2026-11-11 close</p>
 <p><span class="env-label">Risk-on</span><span class="env-band">Volatility: Normal</span></p>
@@ -142,52 +149,52 @@ td.name { white-space: normal; }
 </section>
 <section class="setups">
 <h2>Setups today</h2>
-<p class="note">From the largest holdings of the scanned sectors: XLV (Leading), XLP (Leading), XLF (Leading), XLK (Lagging), XLC (Lagging). Rel 3m is the 3-month return minus the sector ETF's return (percentage points); vs 20 EMA is the close's distance from its 20-day EMA.</p>
+<p class="note">From the largest holdings of the scanned sectors: XLV (Leading), XLP (Leading), XLF (Leading), XLK (Lagging), XLC (Lagging). Rel 3m is the 3-month return minus the sector ETF's return (percentage points); vs 20 EMA is the close's distance from its 20-day EMA. Earnings is the next report date and how many days away it is, highlighted within 14 days.</p>
 <h3>Long ideas (1)</h3>
 <p class="note">Pullback stocks in Leading sectors, beating their sector over 3 months.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>Ticker</th><th>Sector</th><th>Rel 3m</th><th>vs 20 EMA</th></tr></thead>
+<thead><tr><th>Ticker</th><th>Sector</th><th>Rel 3m</th><th>vs 20 EMA</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>TRV</td><td>XLF</td><td>+7.3</td><td>+1.3%</td></tr>
+<tr><td>TRV</td><td>XLF</td><td>+7.3</td><td>+1.3%</td><td>Jan 20 (69d)</td></tr>
 </tbody>
 </table></div>
 <p class="note">Filtered out: 12 with relative 3-month return at or below 0.</p>
 <h3>Wait for pullback (10)</h3>
 <p class="note">Extended or Trending stocks in Leading sectors, beating their sector over 3 months. The 10 strongest.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>Ticker</th><th>Sector</th><th>Rel 3m</th><th>vs 20 EMA</th><th>Setup</th></tr></thead>
+<thead><tr><th>Ticker</th><th>Sector</th><th>Rel 3m</th><th>vs 20 EMA</th><th>Setup</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>EL</td><td>XLP</td><td>+22.0</td><td>+4.3%</td><td>Trending</td></tr>
-<tr><td>CME</td><td>XLF</td><td>+17.8</td><td>+5.1%</td><td>Trending</td></tr>
-<tr><td>KDP</td><td>XLP</td><td>+16.8</td><td>+7.4%</td><td>Extended</td></tr>
-<tr><td>ICE</td><td>XLF</td><td>+15.7</td><td>+7.6%</td><td>Extended</td></tr>
-<tr><td>MA</td><td>XLF</td><td>+15.7</td><td>+3.9%</td><td>Trending</td></tr>
-<tr><td>V</td><td>XLF</td><td>+15.7</td><td>+3.3%</td><td>Trending</td></tr>
-<tr><td>KR</td><td>XLP</td><td>+15.2</td><td>+4.6%</td><td>Trending</td></tr>
-<tr><td>BRK.B</td><td>XLF</td><td>+15.0</td><td>+5.9%</td><td>Extended</td></tr>
-<tr><td>MO</td><td>XLP</td><td>+13.8</td><td>+2.8%</td><td>Trending</td></tr>
-<tr><td>MCK</td><td>XLV</td><td>+13.5</td><td>+6.0%</td><td>Extended</td></tr>
+<tr><td>EL</td><td>XLP</td><td>+22.0</td><td>+4.3%</td><td>Trending</td><td>Feb 3 (83d)</td></tr>
+<tr><td>CME</td><td>XLF</td><td>+17.8</td><td>+5.1%</td><td>Trending</td><td>Feb 3 (83d)</td></tr>
+<tr><td>KDP</td><td>XLP</td><td>+16.8</td><td>+7.4%</td><td>Extended</td><td>Feb 23 (103d)</td></tr>
+<tr><td>ICE</td><td>XLF</td><td>+15.7</td><td>+7.6%</td><td>Extended</td><td>Feb 4 (84d)</td></tr>
+<tr><td>MA</td><td>XLF</td><td>+15.7</td><td>+3.9%</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>V</td><td>XLF</td><td>+15.7</td><td>+3.3%</td><td>Trending</td><td>Jan 26 (75d)</td></tr>
+<tr><td>KR</td><td>XLP</td><td>+15.2</td><td>+4.6%</td><td>Trending</td><td>Dec 3 (21d)</td></tr>
+<tr><td>BRK.B</td><td>XLF</td><td>+15.0</td><td>+5.9%</td><td>Extended</td><td>Mar 1 (109d)</td></tr>
+<tr><td>MO</td><td>XLP</td><td>+13.8</td><td>+2.8%</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>MCK</td><td>XLV</td><td>+13.5</td><td>+6.0%</td><td>Extended</td><td>Feb 3 (83d)</td></tr>
 </tbody>
 </table></div>
 <p class="note">Filtered out: 10 with relative 3-month return at or below 0; 23 beyond the 10 strongest.</p>
 <h3>Put ideas (10)</h3>
 <p class="note">Breaking down stocks in Lagging sectors, trailing their sector over 3 months and below the 20 EMA. The 10 weakest.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>Ticker</th><th>Sector</th><th>Rel 3m</th><th>vs 20 EMA</th></tr></thead>
+<thead><tr><th>Ticker</th><th>Sector</th><th>Rel 3m</th><th>vs 20 EMA</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>INTC</td><td>XLK</td><td>-31.7</td><td>-16.2%</td></tr>
-<tr><td>RDDT</td><td>XLC</td><td>-30.0</td><td>-10.3%</td></tr>
-<tr><td>SNDK</td><td>XLK</td><td>-27.5</td><td>-14.5%</td></tr>
-<tr><td>LRCX</td><td>XLK</td><td>-21.4</td><td>-2.1%</td></tr>
-<tr><td>SKYD</td><td>XLC</td><td>-17.2</td><td>-3.3%</td></tr>
-<tr><td>MRVL</td><td>XLK</td><td>-15.5</td><td>-12.8%</td></tr>
-<tr><td>NFLX</td><td>XLC</td><td>-14.3</td><td>-1.2%</td></tr>
-<tr><td>NVDA</td><td>XLK</td><td>-14.3</td><td>-13.0%</td></tr>
-<tr><td>GOOG</td><td>XLC</td><td>-12.3</td><td>-3.7%</td></tr>
-<tr><td>GOOGL</td><td>XLC</td><td>-12.0</td><td>-3.5%</td></tr>
+<tr><td>INTC</td><td>XLK</td><td>-31.7</td><td>-16.2%</td><td>Jan 28 (77d)</td></tr>
+<tr><td>RDDT</td><td>XLC</td><td>-30.0</td><td>-10.3%</td><td>Feb 4 (84d)</td></tr>
+<tr><td>SNDK</td><td>XLK</td><td>-27.5</td><td>-14.5%</td><td>Feb 15 (95d)</td></tr>
+<tr><td>LRCX</td><td>XLK</td><td>-21.4</td><td>-2.1%</td><td>Jan 27 (76d)</td></tr>
+<tr><td>SKYD</td><td>XLC</td><td>-17.2</td><td>-3.3%</td><td>Feb 24 (104d)</td></tr>
+<tr><td>MRVL</td><td>XLK</td><td>-15.5</td><td>-12.8%</td><td>Dec 1 (19d)</td></tr>
+<tr><td>NFLX</td><td>XLC</td><td>-14.3</td><td>-1.2%</td><td>Jan 19 (68d)</td></tr>
+<tr><td>NVDA</td><td>XLK</td><td>-14.3</td><td>-13.0%</td><td><span class="earn-soon">Nov 17 (5d)</span></td></tr>
+<tr><td>GOOGL</td><td>XLC</td><td>-12.0</td><td>-3.5%</td><td>Feb 3 (83d)</td></tr>
+<tr><td>PANW</td><td>XLK</td><td>-7.0</td><td>-5.2%</td><td><span class="earn-soon">Nov 18 (6d)</span></td></tr>
 </tbody>
 </table></div>
-<p class="note">Filtered out: 5 with relative 3-month return at or above 0; 4 with the close at or above the 20 EMA; 5 beyond the 10 weakest.</p>
+<p class="note">Filtered out: 5 with relative 3-month return at or above 0; 4 with the close at or above the 20 EMA; 2 second share class (NWS, GOOG); 3 beyond the 10 weakest.</p>
 </section>
 <p><a class="button" href="dashboard.html">Open the dashboard</a></p>
 <h2>Sector ranking</h2>
@@ -211,158 +218,158 @@ td.name { white-space: normal; }
 <h2>XLV Health Care (Leading): top holdings</h2>
 <p class="note">Largest holdings, ranked by 3-month return minus XLV's return (percentage points). The next three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th></tr></thead>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>MRNA</td><td>1.3</td><td>+278.1</td><td>yes</td><td>yes</td><td>yes</td><td>Event mover</td></tr>
-<tr><td>2</td><td>MCK</td><td>1.8</td><td>+13.5</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>3</td><td>GILD</td><td>3.1</td><td>+10.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>4</td><td>HCA</td><td>1.1</td><td>+10.5</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>5</td><td>TMO</td><td>3.9</td><td>+7.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>6</td><td>REGN</td><td>1.4</td><td>+6.5</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>7</td><td>LLY</td><td>16.8</td><td>+6.4</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>8</td><td>ABBV</td><td>7.6</td><td>+5.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>9</td><td>DHR</td><td>2.1</td><td>+3.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>10</td><td>MDT</td><td>1.8</td><td>+0.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>11</td><td>COR</td><td>1.0</td><td>+0.4</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>12</td><td>AMGN</td><td>3.7</td><td>+0.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>13</td><td>ISRG</td><td>2.3</td><td>-0.6</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>14</td><td>PFE</td><td>2.4</td><td>-1.2</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>15</td><td>MRK</td><td>5.3</td><td>-3.4</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>16</td><td>CI</td><td>1.2</td><td>-3.6</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>17</td><td>ELV</td><td>1.4</td><td>-4.3</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>18</td><td>JNJ</td><td>9.9</td><td>-5.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>19</td><td>VRTX</td><td>2.0</td><td>-6.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>20</td><td>UNH</td><td>5.3</td><td>-11.1</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>21</td><td>ABT</td><td>2.8</td><td>-13.8</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>22</td><td>BMY</td><td>1.9</td><td>-14.3</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>23</td><td>CVS</td><td>1.7</td><td>-17.7</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>24</td><td>SYK</td><td>1.6</td><td>-18.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>25</td><td>BSX</td><td>1.0</td><td>-25.3</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
+<tr><td>1</td><td>MRNA</td><td>1.3</td><td>+278.1</td><td>yes</td><td>yes</td><td>yes</td><td>Event mover</td><td>Feb 12 (92d)</td></tr>
+<tr><td>2</td><td>MCK</td><td>1.8</td><td>+13.5</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Feb 3 (83d)</td></tr>
+<tr><td>3</td><td>GILD</td><td>3.1</td><td>+10.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 9 (89d)</td></tr>
+<tr><td>4</td><td>HCA</td><td>1.1</td><td>+10.5</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Jan 26 (75d)</td></tr>
+<tr><td>5</td><td>TMO</td><td>3.9</td><td>+7.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>6</td><td>REGN</td><td>1.4</td><td>+6.5</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Jan 28 (77d)</td></tr>
+<tr><td>7</td><td>LLY</td><td>16.8</td><td>+6.4</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Feb 3 (83d)</td></tr>
+<tr><td>8</td><td>ABBV</td><td>7.6</td><td>+5.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 3 (83d)</td></tr>
+<tr><td>9</td><td>DHR</td><td>2.1</td><td>+3.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 27 (76d)</td></tr>
+<tr><td>10</td><td>MDT</td><td>1.8</td><td>+0.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td><span class="earn-soon">Nov 24 (12d)</span></td></tr>
+<tr><td>11</td><td>COR</td><td>1.0</td><td>+0.4</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 3 (83d)</td></tr>
+<tr><td>12</td><td>AMGN</td><td>3.7</td><td>+0.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 2 (82d)</td></tr>
+<tr><td>13</td><td>ISRG</td><td>2.3</td><td>-0.6</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 21 (70d)</td></tr>
+<tr><td>14</td><td>PFE</td><td>2.4</td><td>-1.2</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Feb 2 (82d)</td></tr>
+<tr><td>15</td><td>MRK</td><td>5.3</td><td>-3.4</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Feb 2 (82d)</td></tr>
+<tr><td>16</td><td>CI</td><td>1.2</td><td>-3.6</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Feb 4 (84d)</td></tr>
+<tr><td>17</td><td>ELV</td><td>1.4</td><td>-4.3</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 28 (77d)</td></tr>
+<tr><td>18</td><td>JNJ</td><td>9.9</td><td>-5.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 26 (75d)</td></tr>
+<tr><td>19</td><td>VRTX</td><td>2.0</td><td>-6.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 11 (91d)</td></tr>
+<tr><td>20</td><td>UNH</td><td>5.3</td><td>-11.1</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 12 (61d)</td></tr>
+<tr><td>21</td><td>ABT</td><td>2.8</td><td>-13.8</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 28 (77d)</td></tr>
+<tr><td>22</td><td>BMY</td><td>1.9</td><td>-14.3</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Feb 4 (84d)</td></tr>
+<tr><td>23</td><td>CVS</td><td>1.7</td><td>-17.7</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 9 (89d)</td></tr>
+<tr><td>24</td><td>SYK</td><td>1.6</td><td>-18.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>25</td><td>BSX</td><td>1.0</td><td>-25.3</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Feb 10 (90d)</td></tr>
 </tbody>
 </table></div>
 <h2>XLP Consumer Staples (Leading): top holdings</h2>
 <p class="note">Largest holdings, ranked by 3-month return minus XLP's return (percentage points). The next three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th></tr></thead>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>EL</td><td>1.6</td><td>+22.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>2</td><td>KDP</td><td>3.0</td><td>+16.8</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>3</td><td>KR</td><td>2.3</td><td>+15.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>4</td><td>MO</td><td>4.6</td><td>+13.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>5</td><td>PG</td><td>7.8</td><td>+10.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>6</td><td>COST</td><td>9.6</td><td>+6.2</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>7</td><td>DG</td><td>1.7</td><td>+6.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>8</td><td>KO</td><td>7.5</td><td>+5.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>9</td><td>CHD</td><td>1.5</td><td>+3.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>10</td><td>DLTR</td><td>1.6</td><td>+3.3</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>11</td><td>WMT</td><td>11.1</td><td>+1.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>12</td><td>STZ</td><td>1.2</td><td>-0.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>13</td><td>CL</td><td>4.5</td><td>-1.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>14</td><td>MDLZ</td><td>4.3</td><td>-1.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>15</td><td>TGT</td><td>4.1</td><td>-1.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>16</td><td>PM</td><td>6.1</td><td>-2.2</td><td>no</td><td>no</td><td>yes</td><td>Breaking down</td></tr>
-<tr><td>17</td><td>PEP</td><td>4.2</td><td>-3.6</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>18</td><td>KMB</td><td>3.8</td><td>-7.5</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>19</td><td>MNST</td><td>3.7</td><td>-9.8</td><td>no</td><td>no</td><td>yes</td><td>Breaking down</td></tr>
-<tr><td>20</td><td>KHC</td><td>1.2</td><td>-9.9</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>21</td><td>HSY</td><td>1.5</td><td>-11.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>22</td><td>SYY</td><td>2.1</td><td>-14.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>23</td><td>ADM</td><td>2.0</td><td>-18.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>24</td><td>CASY</td><td>1.5</td><td>-23.3</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>25</td><td>VYLR</td><td>1.5</td><td>n/a</td><td>yes</td><td>n/a</td><td>n/a</td><td>Mixed</td></tr>
+<tr><td>1</td><td>EL</td><td>1.6</td><td>+22.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 3 (83d)</td></tr>
+<tr><td>2</td><td>KDP</td><td>3.0</td><td>+16.8</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Feb 23 (103d)</td></tr>
+<tr><td>3</td><td>KR</td><td>2.3</td><td>+15.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Dec 3 (21d)</td></tr>
+<tr><td>4</td><td>MO</td><td>4.6</td><td>+13.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>5</td><td>PG</td><td>7.8</td><td>+10.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 21 (70d)</td></tr>
+<tr><td>6</td><td>COST</td><td>9.6</td><td>+6.2</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Dec 10 (28d)</td></tr>
+<tr><td>7</td><td>DG</td><td>1.7</td><td>+6.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Dec 3 (21d)</td></tr>
+<tr><td>8</td><td>KO</td><td>7.5</td><td>+5.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 9 (89d)</td></tr>
+<tr><td>9</td><td>CHD</td><td>1.5</td><td>+3.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 29 (78d)</td></tr>
+<tr><td>10</td><td>DLTR</td><td>1.6</td><td>+3.3</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td><span class="earn-soon">Nov 24 (12d)</span></td></tr>
+<tr><td>11</td><td>WMT</td><td>11.1</td><td>+1.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td><span class="earn-soon">Nov 19 (7d)</span></td></tr>
+<tr><td>12</td><td>STZ</td><td>1.2</td><td>-0.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 7 (56d)</td></tr>
+<tr><td>13</td><td>CL</td><td>4.5</td><td>-1.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 29 (78d)</td></tr>
+<tr><td>14</td><td>MDLZ</td><td>4.3</td><td>-1.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 2 (82d)</td></tr>
+<tr><td>15</td><td>TGT</td><td>4.1</td><td>-1.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td><span class="earn-soon">Nov 18 (6d)</span></td></tr>
+<tr><td>16</td><td>PM</td><td>6.1</td><td>-2.2</td><td>no</td><td>no</td><td>yes</td><td>Breaking down</td><td>Feb 4 (84d)</td></tr>
+<tr><td>17</td><td>PEP</td><td>4.2</td><td>-3.6</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 2 (82d)</td></tr>
+<tr><td>18</td><td>KMB</td><td>3.8</td><td>-7.5</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Feb 2 (82d)</td></tr>
+<tr><td>19</td><td>MNST</td><td>3.7</td><td>-9.8</td><td>no</td><td>no</td><td>yes</td><td>Breaking down</td><td>Feb 25 (105d)</td></tr>
+<tr><td>20</td><td>KHC</td><td>1.2</td><td>-9.9</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Feb 10 (90d)</td></tr>
+<tr><td>21</td><td>HSY</td><td>1.5</td><td>-11.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 4 (84d)</td></tr>
+<tr><td>22</td><td>SYY</td><td>2.1</td><td>-14.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 2 (82d)</td></tr>
+<tr><td>23</td><td>ADM</td><td>2.0</td><td>-18.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 2 (82d)</td></tr>
+<tr><td>24</td><td>CASY</td><td>1.5</td><td>-23.3</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Dec 8 (26d)</td></tr>
+<tr><td>25</td><td>VYLR</td><td>1.5</td><td>n/a</td><td>yes</td><td>n/a</td><td>n/a</td><td>Mixed</td><td>Mar 3 (111d)</td></tr>
 </tbody>
 </table></div>
 <h2>XLF Financials (Leading): top holdings</h2>
 <p class="note">Largest holdings, ranked by 3-month return minus XLF's return (percentage points). The next three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th></tr></thead>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>CME</td><td>1.4</td><td>+17.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>2</td><td>ICE</td><td>1.2</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>3</td><td>MA</td><td>6.5</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>4</td><td>V</td><td>8.8</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>5</td><td>BRK.B</td><td>13.3</td><td>+15.0</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>6</td><td>SPGI</td><td>1.7</td><td>+11.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>7</td><td>PGR</td><td>1.6</td><td>+10.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>8</td><td>MRSH</td><td>1.2</td><td>+9.6</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>9</td><td>TRV</td><td>1.0</td><td>+7.3</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>10</td><td>CB</td><td>1.6</td><td>+6.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>11</td><td>MCO</td><td>0.9</td><td>+4.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>12</td><td>BLK</td><td>2.1</td><td>+3.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>13</td><td>WFC</td><td>3.1</td><td>-3.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>14</td><td>JPM</td><td>11.1</td><td>-6.0</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>15</td><td>BNY</td><td>1.3</td><td>-6.5</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>16</td><td>AXP</td><td>2.1</td><td>-6.7</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>17</td><td>USB</td><td>1.1</td><td>-7.0</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>18</td><td>PNC</td><td>1.1</td><td>-9.2</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>19</td><td>C</td><td>2.5</td><td>-11.0</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>20</td><td>GS</td><td>3.3</td><td>-11.7</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>21</td><td>COF</td><td>1.5</td><td>-12.6</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>22</td><td>MS</td><td>2.8</td><td>-13.2</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>23</td><td>SCHW</td><td>1.8</td><td>-16.4</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>24</td><td>BX</td><td>1.1</td><td>-18.5</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>25</td><td>BAC</td><td>4.0</td><td>-21.5</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
+<tr><td>1</td><td>CME</td><td>1.4</td><td>+17.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 3 (83d)</td></tr>
+<tr><td>2</td><td>ICE</td><td>1.2</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Feb 4 (84d)</td></tr>
+<tr><td>3</td><td>MA</td><td>6.5</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>4</td><td>V</td><td>8.8</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 26 (75d)</td></tr>
+<tr><td>5</td><td>BRK.B</td><td>13.3</td><td>+15.0</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Mar 1 (109d)</td></tr>
+<tr><td>6</td><td>SPGI</td><td>1.7</td><td>+11.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 9 (89d)</td></tr>
+<tr><td>7</td><td>PGR</td><td>1.6</td><td>+10.9</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 27 (76d)</td></tr>
+<tr><td>8</td><td>MRSH</td><td>1.2</td><td>+9.6</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>9</td><td>TRV</td><td>1.0</td><td>+7.3</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 20 (69d)</td></tr>
+<tr><td>10</td><td>CB</td><td>1.6</td><td>+6.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 2 (82d)</td></tr>
+<tr><td>11</td><td>MCO</td><td>0.9</td><td>+4.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 17 (97d)</td></tr>
+<tr><td>12</td><td>BLK</td><td>2.1</td><td>+3.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 14 (63d)</td></tr>
+<tr><td>13</td><td>WFC</td><td>3.1</td><td>-3.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 14 (63d)</td></tr>
+<tr><td>14</td><td>JPM</td><td>11.1</td><td>-6.0</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Jan 14 (63d)</td></tr>
+<tr><td>15</td><td>BNY</td><td>1.3</td><td>-6.5</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Jan 15 (64d)</td></tr>
+<tr><td>16</td><td>AXP</td><td>2.1</td><td>-6.7</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 29 (78d)</td></tr>
+<tr><td>17</td><td>USB</td><td>1.1</td><td>-7.0</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 19 (68d)</td></tr>
+<tr><td>18</td><td>PNC</td><td>1.1</td><td>-9.2</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Jan 15 (64d)</td></tr>
+<tr><td>19</td><td>C</td><td>2.5</td><td>-11.0</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 14 (63d)</td></tr>
+<tr><td>20</td><td>GS</td><td>3.3</td><td>-11.7</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Jan 19 (68d)</td></tr>
+<tr><td>21</td><td>COF</td><td>1.5</td><td>-12.6</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 19 (68d)</td></tr>
+<tr><td>22</td><td>MS</td><td>2.8</td><td>-13.2</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 14 (63d)</td></tr>
+<tr><td>23</td><td>SCHW</td><td>1.8</td><td>-16.4</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 21 (70d)</td></tr>
+<tr><td>24</td><td>BX</td><td>1.1</td><td>-18.5</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Jan 28 (77d)</td></tr>
+<tr><td>25</td><td>BAC</td><td>4.0</td><td>-21.5</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 15 (64d)</td></tr>
 </tbody>
 </table></div>
 <h2>XLK Technology (Lagging): top holdings</h2>
 <p class="note">Largest holdings, ranked by 3-month return minus XLK's return (percentage points). The next three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th></tr></thead>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>ACN</td><td>1.0</td><td>+51.7</td><td>yes</td><td>yes</td><td>yes</td><td>Event mover</td></tr>
-<tr><td>2</td><td>AAPL</td><td>16.2</td><td>+25.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>3</td><td>AMD</td><td>5.1</td><td>+23.0</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>4</td><td>TXN</td><td>1.8</td><td>+22.4</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>5</td><td>CRM</td><td>1.1</td><td>+16.9</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>6</td><td>QCOM</td><td>1.2</td><td>+16.2</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>7</td><td>ADI</td><td>1.3</td><td>+16.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>8</td><td>IBM</td><td>1.5</td><td>+13.9</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>9</td><td>MSFT</td><td>12.1</td><td>+13.6</td><td>no</td><td>yes</td><td>yes</td><td>Pullback</td></tr>
-<tr><td>10</td><td>CRWD</td><td>1.5</td><td>+10.1</td><td>no</td><td>no</td><td>yes</td><td>Breaking down</td></tr>
-<tr><td>11</td><td>ANET</td><td>1.3</td><td>+5.1</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>12</td><td>PLTR</td><td>2.5</td><td>+4.8</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>13</td><td>APH</td><td>1.2</td><td>+4.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>14</td><td>CSCO</td><td>2.5</td><td>-2.4</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>15</td><td>MU</td><td>3.8</td><td>-6.1</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>16</td><td>PANW</td><td>1.7</td><td>-7.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>17</td><td>AVGO</td><td>5.1</td><td>-8.7</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>18</td><td>ORCL</td><td>1.6</td><td>-9.0</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>19</td><td>NVDA</td><td>13.1</td><td>-14.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>20</td><td>KLAC</td><td>1.3</td><td>-14.5</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>21</td><td>MRVL</td><td>0.9</td><td>-15.5</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>22</td><td>AMAT</td><td>2.0</td><td>-17.5</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>23</td><td>LRCX</td><td>1.9</td><td>-21.4</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>24</td><td>SNDK</td><td>0.9</td><td>-27.5</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>25</td><td>INTC</td><td>2.0</td><td>-31.7</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
+<tr><td>1</td><td>ACN</td><td>1.0</td><td>+51.7</td><td>yes</td><td>yes</td><td>yes</td><td>Event mover</td><td>Dec 17 (35d)</td></tr>
+<tr><td>2</td><td>AAPL</td><td>16.2</td><td>+25.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>3</td><td>AMD</td><td>5.1</td><td>+23.0</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Feb 2 (82d)</td></tr>
+<tr><td>4</td><td>TXN</td><td>1.8</td><td>+22.4</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 26 (75d)</td></tr>
+<tr><td>5</td><td>CRM</td><td>1.1</td><td>+16.9</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Dec 2 (20d)</td></tr>
+<tr><td>6</td><td>QCOM</td><td>1.2</td><td>+16.2</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Feb 3 (83d)</td></tr>
+<tr><td>7</td><td>ADI</td><td>1.3</td><td>+16.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td><span class="earn-soon">Nov 24 (12d)</span></td></tr>
+<tr><td>8</td><td>IBM</td><td>1.5</td><td>+13.9</td><td>yes</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 27 (76d)</td></tr>
+<tr><td>9</td><td>MSFT</td><td>12.1</td><td>+13.6</td><td>no</td><td>yes</td><td>yes</td><td>Pullback</td><td>Jan 27 (76d)</td></tr>
+<tr><td>10</td><td>CRWD</td><td>1.5</td><td>+10.1</td><td>no</td><td>no</td><td>yes</td><td>Breaking down</td><td>Dec 1 (19d)</td></tr>
+<tr><td>11</td><td>ANET</td><td>1.3</td><td>+5.1</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Feb 9 (89d)</td></tr>
+<tr><td>12</td><td>PLTR</td><td>2.5</td><td>+4.8</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 1 (81d)</td></tr>
+<tr><td>13</td><td>APH</td><td>1.2</td><td>+4.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 27 (76d)</td></tr>
+<tr><td>14</td><td>CSCO</td><td>2.5</td><td>-2.4</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td><span class="earn-soon">Nov 12 (today)</span></td></tr>
+<tr><td>15</td><td>MU</td><td>3.8</td><td>-6.1</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Dec 23 (41d)</td></tr>
+<tr><td>16</td><td>PANW</td><td>1.7</td><td>-7.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td><span class="earn-soon">Nov 18 (6d)</span></td></tr>
+<tr><td>17</td><td>AVGO</td><td>5.1</td><td>-8.7</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Dec 9 (27d)</td></tr>
+<tr><td>18</td><td>ORCL</td><td>1.6</td><td>-9.0</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Dec 14 (32d)</td></tr>
+<tr><td>19</td><td>NVDA</td><td>13.1</td><td>-14.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td><span class="earn-soon">Nov 17 (5d)</span></td></tr>
+<tr><td>20</td><td>KLAC</td><td>1.3</td><td>-14.5</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 28 (77d)</td></tr>
+<tr><td>21</td><td>MRVL</td><td>0.9</td><td>-15.5</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Dec 1 (19d)</td></tr>
+<tr><td>22</td><td>AMAT</td><td>2.0</td><td>-17.5</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td><span class="earn-soon">Nov 12 (today)</span></td></tr>
+<tr><td>23</td><td>LRCX</td><td>1.9</td><td>-21.4</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 27 (76d)</td></tr>
+<tr><td>24</td><td>SNDK</td><td>0.9</td><td>-27.5</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 15 (95d)</td></tr>
+<tr><td>25</td><td>INTC</td><td>2.0</td><td>-31.7</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 28 (77d)</td></tr>
 </tbody>
 </table></div>
 <h2>XLC Communication Services (Lagging): top holdings</h2>
 <p class="note">Largest holdings, ranked by 3-month return minus XLC's return (percentage points). The next three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
 <div class="table-wrap"><table>
-<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th></tr></thead>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th><th>Setup</th><th>Earnings</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>APP</td><td>6.3</td><td>+32.6</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td></tr>
-<tr><td>2</td><td>DIS</td><td>5.5</td><td>+17.4</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>3</td><td>ECHO</td><td>1.9</td><td>+14.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>4</td><td>META</td><td>20.5</td><td>+9.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>5</td><td>FOX</td><td>1.1</td><td>+8.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>6</td><td>FOXA</td><td>3.0</td><td>+7.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>7</td><td>OMC</td><td>3.3</td><td>+4.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>8</td><td>TKO</td><td>1.6</td><td>+3.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>9</td><td>VZ</td><td>4.5</td><td>+1.3</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>10</td><td>CMCSA</td><td>4.8</td><td>+0.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>11</td><td>LYV</td><td>3.8</td><td>+0.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td></tr>
-<tr><td>12</td><td>TTWO</td><td>5.2</td><td>-1.2</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>13</td><td>TMUS</td><td>4.6</td><td>-2.4</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td></tr>
-<tr><td>14</td><td>NWSA</td><td>1.3</td><td>-3.8</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>15</td><td>T</td><td>4.2</td><td>-5.2</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>16</td><td>NWS</td><td>0.5</td><td>-5.6</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>17</td><td>CHTR</td><td>2.0</td><td>-9.7</td><td>yes</td><td>yes</td><td>no</td><td>Extended</td></tr>
-<tr><td>18</td><td>GOOGL</td><td>10.6</td><td>-12.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>19</td><td>GOOG</td><td>8.5</td><td>-12.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>20</td><td>NFLX</td><td>4.0</td><td>-14.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>21</td><td>SKYD</td><td>0.6</td><td>-17.2</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
-<tr><td>22</td><td>RDDT</td><td>2.1</td><td>-30.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td></tr>
+<tr><td>1</td><td>APP</td><td>6.3</td><td>+32.6</td><td>yes</td><td>yes</td><td>yes</td><td>Extended</td><td>Feb 10 (90d)</td></tr>
+<tr><td>2</td><td>DIS</td><td>5.5</td><td>+17.4</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td><span class="earn-soon">Nov 17 (5d)</span></td></tr>
+<tr><td>3</td><td>ECHO</td><td>1.9</td><td>+14.7</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Mar 1 (109d)</td></tr>
+<tr><td>4</td><td>META</td><td>20.5</td><td>+9.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 27 (76d)</td></tr>
+<tr><td>5</td><td>FOX</td><td>1.1</td><td>+8.1</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 4 (84d)</td></tr>
+<tr><td>6</td><td>FOXA</td><td>3.0</td><td>+7.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 4 (84d)</td></tr>
+<tr><td>7</td><td>OMC</td><td>3.3</td><td>+4.8</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 17 (97d)</td></tr>
+<tr><td>8</td><td>TKO</td><td>1.6</td><td>+3.5</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 24 (104d)</td></tr>
+<tr><td>9</td><td>VZ</td><td>4.5</td><td>+1.3</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Jan 28 (77d)</td></tr>
+<tr><td>10</td><td>CMCSA</td><td>4.8</td><td>+0.2</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Jan 28 (77d)</td></tr>
+<tr><td>11</td><td>LYV</td><td>3.8</td><td>+0.0</td><td>yes</td><td>yes</td><td>yes</td><td>Trending</td><td>Feb 18 (98d)</td></tr>
+<tr><td>12</td><td>TTWO</td><td>5.2</td><td>-1.2</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Feb 9 (89d)</td></tr>
+<tr><td>13</td><td>TMUS</td><td>4.6</td><td>-2.4</td><td>yes</td><td>yes</td><td>no</td><td>Mixed</td><td>Feb 10 (90d)</td></tr>
+<tr><td>14</td><td>NWSA</td><td>1.3</td><td>-3.8</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 4 (84d)</td></tr>
+<tr><td>15</td><td>T</td><td>4.2</td><td>-5.2</td><td>yes</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 27 (76d)</td></tr>
+<tr><td>16</td><td>NWS</td><td>0.5</td><td>-5.6</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 4 (84d)</td></tr>
+<tr><td>17</td><td>CHTR</td><td>2.0</td><td>-9.7</td><td>yes</td><td>yes</td><td>no</td><td>Extended</td><td>Jan 29 (78d)</td></tr>
+<tr><td>18</td><td>GOOGL</td><td>10.6</td><td>-12.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 3 (83d)</td></tr>
+<tr><td>19</td><td>GOOG</td><td>8.5</td><td>-12.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 3 (83d)</td></tr>
+<tr><td>20</td><td>NFLX</td><td>4.0</td><td>-14.3</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Jan 19 (68d)</td></tr>
+<tr><td>21</td><td>SKYD</td><td>0.6</td><td>-17.2</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 24 (104d)</td></tr>
+<tr><td>22</td><td>RDDT</td><td>2.1</td><td>-30.0</td><td>no</td><td>no</td><td>no</td><td>Breaking down</td><td>Feb 4 (84d)</td></tr>
 </tbody>
 </table></div>
 </body>

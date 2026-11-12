@@ -5,8 +5,8 @@ Usage:  python scripts/sector_stocks.py XLV
 Takes the fund's 25 largest holdings (from the SPDR daily holdings file, or
 data/holdings_fallback.json if that download fails), downloads about a year of
 prices, and for each stock reports its 3-month return relative to the sector
-ETF, three trend flags, its distance from the 20 and 50-day EMA, and a
-setup tag. Saves the table to output/stocks_<TICKER>.csv.
+ETF, three trend flags, its distance from the 20 and 50-day EMA, a setup
+tag, and its next earnings date. Saves the table to output/stocks_<TICKER>.csv.
 """
 
 import argparse
@@ -51,6 +51,9 @@ PULLBACK_DISTANCE = 2     # % either side of the 20 EMA
 MAX_ATTEMPTS = 3
 RETRY_WAIT_SECONDS = 5
 TIMEOUT_SECONDS = 30
+
+EARNINGS_PAUSE_SECONDS = 0.4   # pause between earnings lookups, to avoid rate limits
+EARNINGS_SOON_DAYS = 14        # calendar days
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
 CLOSE_CUTOFF = dt_time(16, 15)  # before this (US Eastern), today's bar isn't final
 
@@ -208,6 +211,77 @@ def analyse(holdings: pd.DataFrame, prices: pd.DataFrame, sector: str):
     return table.reset_index(drop=True), skipped
 
 
+def upcoming(dates, today: date) -> date | None:
+    """Earliest of the given dates that is today or later."""
+    days = [d.date() if hasattr(d, "date") else d for d in dates]
+    days = sorted(d for d in days if d >= today)
+    return days[0] if days else None
+
+
+def next_earnings_date(ticker: str, today: date) -> tuple[date | None, str]:
+    """Next earnings date from Yahoo, and where it came from.
+
+    Returns (date, source) or (None, reason it is missing). Never raises:
+    earnings data is a nice-to-have and must not stop the script.
+    """
+    stock = yf.Ticker(ticker.replace(".", "-"))
+    reason = "no date listed"
+    try:
+        calendar = stock.calendar
+        dates = calendar.get("Earnings Date") if isinstance(calendar, dict) else None
+        if dates:
+            if not isinstance(dates, (list, tuple)):
+                dates = [dates]
+            day = upcoming(dates, today)
+            if day:
+                return day, "calendar"
+            reason = "only past dates listed"
+    except Exception as exc:  # network errors, rate limits, format changes
+        reason = f"lookup failed ({type(exc).__name__})"
+
+    # Right after a report Yahoo's calendar still shows the old date. Its
+    # earnings history table usually already has the next (projected) one.
+    try:
+        time.sleep(EARNINGS_PAUSE_SECONDS)
+        history = stock.get_earnings_dates(limit=8)
+        if history is not None and not history.empty:
+            day = upcoming(history.index, today)
+            if day:
+                return day, "earnings history"
+    except Exception as exc:
+        reason = f"lookup failed ({type(exc).__name__})"
+    return None, reason
+
+
+def add_earnings(table: pd.DataFrame) -> pd.DataFrame:
+    """Add next_earnings and earnings_soon columns, and print the coverage."""
+    today = datetime.now(MARKET_TIMEZONE).date()
+    found, sources, reasons = [], {}, {}
+    for i, ticker in enumerate(table["Ticker"]):
+        if i:
+            time.sleep(EARNINGS_PAUSE_SECONDS)
+        day, detail = next_earnings_date(ticker, today)
+        found.append(day)
+        if day is None:
+            reasons.setdefault(detail, []).append(ticker)
+        else:
+            sources[detail] = sources.get(detail, 0) + 1
+
+    table = table.copy()
+    table["next_earnings"] = [d.isoformat() if d else None for d in found]
+    table["earnings_soon"] = [
+        d is not None and (d - today).days <= EARNINGS_SOON_DAYS for d in found
+    ]
+
+    blank = sum(d is None for d in found)
+    print(f"\nEarnings dates: {len(found) - blank} of {len(found)} stocks have a date, {blank} blank.")
+    for source, count in sources.items():
+        print(f"  {count} from Yahoo's {source}")
+    for reason, tickers in reasons.items():
+        print(f"  Blank, {reason}: {', '.join(tickers)}")
+    return table
+
+
 def print_table(table: pd.DataFrame) -> None:
     def flag(value):
         return "n/a" if value is None or pd.isna(value) else ("yes" if value else "no")
@@ -220,6 +294,8 @@ def print_table(table: pd.DataFrame) -> None:
         "EMA20AboveEMA50": "EMA20>EMA50",
         "DistEMA20": "vs EMA20 %",
         "DistEMA50": "vs EMA50 %",
+        "next_earnings": "Next earnings",
+        "earnings_soon": "Soon",
     })
 
     def signed(value):
@@ -237,6 +313,8 @@ def print_table(table: pd.DataFrame) -> None:
                 ">EMA20": flag,
                 ">EMA50": flag,
                 "EMA20>EMA50": flag,
+                "Next earnings": lambda v: "unknown" if pd.isna(v) else str(v),
+                "Soon": lambda v: "yes" if v else "",
             },
         )
     )
@@ -264,6 +342,7 @@ def main() -> int:
     if table.empty:
         print("No holdings had price data.", file=sys.stderr)
         return 1
+    table = add_earnings(table)
 
     output_path = OUTPUT_DIR / f"stocks_{sector}.csv"
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

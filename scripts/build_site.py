@@ -9,7 +9,7 @@ files the other scripts write to output/, so run those first.
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from html import escape
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -31,6 +31,10 @@ BORDERLINE_SCORE = 1     # relative score within this many points of zero
 BORDERLINE_DAYS = 5      # or label held for fewer than this many days
 WAIT_LIST_LIMIT = 10     # names shown under "Wait for pullback"
 PUT_LIST_LIMIT = 10      # names shown under "Put ideas"
+EARNINGS_SOON_DAYS = 14  # highlight earnings within this many calendar days
+EARNINGS_HOLD_DAYS = 7   # hold back Long ideas with earnings this close
+# Second share class -> the class to keep when both are in a setup list
+DUPLICATE_SHARE_CLASSES = {"GOOG": "GOOGL", "NWS": "NWSA", "FOX": "FOXA"}
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
 
 SECTOR_NAMES = {
@@ -112,6 +116,13 @@ td.name { white-space: normal; }
 .status h3, .setups h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
 .setups h3 + .note { margin: 0.1rem 0 0.3rem; }
 .setups .table-wrap + .note { margin: 0.3rem 0 0; }
+.earn-soon {
+  padding: 0 0.3rem;
+  border-radius: 0.3rem;
+  background: #f0a500;
+  color: #1a1a1a;
+  font-weight: 600;
+}
 .tag {
   display: inline-block;
   margin-left: 0.3rem;
@@ -136,6 +147,27 @@ td.name { white-space: normal; }
 
 def signed(value: float, decimals: int = 1) -> str:
     return "n/a" if pd.isna(value) else f"{value:+.{decimals}f}"
+
+
+def days_to_earnings(value) -> int | None:
+    """Calendar days from today (US Eastern) to an earnings date; None if blank."""
+    if pd.isna(value):
+        return None
+    today = datetime.now(MARKET_TIMEZONE).date()
+    return (date.fromisoformat(str(value)) - today).days
+
+
+def earnings_cell(value) -> str:
+    """Earnings date with days away, e.g. "Jan 20 (69d)"; amber when close."""
+    days = days_to_earnings(value)
+    if days is None:
+        return "unknown"
+    day = date.fromisoformat(str(value))
+    when = "today" if days == 0 else f"{days}d" if days > 0 else f"{-days}d ago"
+    text = f"{day:%b} {day.day} ({when})"
+    if 0 <= days <= EARNINGS_SOON_DAYS:
+        return f'<span class="earn-soon">{text}</span>'
+    return text
 
 
 def flag(value) -> str:
@@ -212,7 +244,7 @@ def load_stocks(sector: str) -> pd.DataFrame:
             f"{path} not found. Run scripts/sector_stocks.py {sector} first."
         )
     stocks = pd.read_csv(path)
-    missing = [c for c in ["Setup", "DistEMA20"] if c not in stocks.columns]
+    missing = [c for c in ["Setup", "DistEMA20", "next_earnings"] if c not in stocks.columns]
     if missing:
         raise RuntimeError(
             f"{path} has no {missing} column. Rerun scripts/sector_stocks.py {sector}."
@@ -229,7 +261,10 @@ def setups_section(drilled: list[dict]) -> str:
         stocks["SectorLabel"] = entry["label"]
         frames.append(stocks)
     stocks = pd.concat(frames) if frames else pd.DataFrame(
-        columns=["Ticker", "Sector", "SectorLabel", "RelReturn3m", "DistEMA20", "Setup"]
+        columns=[
+            "Ticker", "Sector", "SectorLabel", "RelReturn3m", "DistEMA20", "Setup",
+            "next_earnings",
+        ]
     )
 
     def idea_list(
@@ -240,6 +275,7 @@ def setups_section(drilled: list[dict]) -> str:
         long_side: bool,
         limit: int | None = None,
         below_fast_ema: bool = False,
+        hold_for_earnings: bool = False,
     ) -> str:
         """One list. Long-side lists keep relative return above 0, strongest
         first; put-side lists keep it below 0, weakest first."""
@@ -258,6 +294,24 @@ def setups_section(drilled: list[dict]) -> str:
                 dropped.append(f"{(~keep).sum()} with the close at or above the 20 EMA")
             picks = picks[keep]
 
+        # One share class per company: drop the second class when both are here.
+        present = set(picks["Ticker"])
+        duplicates = [
+            t for t in picks["Ticker"]
+            if t in DUPLICATE_SHARE_CLASSES and DUPLICATE_SHARE_CLASSES[t] in present
+        ]
+        if duplicates:
+            dropped.append(
+                f"{len(duplicates)} second share class ({', '.join(duplicates)})"
+            )
+            picks = picks[~picks["Ticker"].isin(duplicates)]
+
+        held_back = picks.iloc[0:0]
+        if hold_for_earnings:
+            days = picks["next_earnings"].map(days_to_earnings)
+            close = days.between(0, EARNINGS_HOLD_DAYS)
+            held_back, picks = picks[close], picks[~close]
+
         picks = picks.sort_values("RelReturn3m", ascending=not long_side)
         if limit is not None and len(picks) > limit:
             which = "strongest" if long_side else "weakest"
@@ -269,23 +323,31 @@ def setups_section(drilled: list[dict]) -> str:
             if dropped
             else '<p class="note">Nothing filtered out.</p>'
         )
+        if not held_back.empty:
+            names = ", ".join(
+                f"{escape(str(r.Ticker))} ({date.fromisoformat(r.next_earnings):%b} "
+                f"{date.fromisoformat(r.next_earnings).day})"
+                for r in held_back.itertuples(index=False)
+            )
+            filtered = f"<p>Held back for earnings: {names}</p>\n" + filtered
         heading = f"<h3>{escape(title)} ({len(picks)})</h3>\n<p class=\"note\">{escape(note)}</p>\n"
         if picks.empty:
             return heading + "<p>None today</p>\n" + filtered
-        headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA"]
+        headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings"]
         rows = [
             [
                 escape(str(r.Ticker)),
                 escape(r.Sector),
                 signed(r.RelReturn3m),
                 "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
+                earnings_cell(r.next_earnings),
             ]
             for r in picks.itertuples(index=False)
         ]
         if len(setups) > 1:
-            headers.append("Setup")
+            headers.insert(4, "Setup")
             for row, r in zip(rows, picks.itertuples(index=False)):
-                row.append(escape(r.Setup))
+                row.insert(4, escape(r.Setup))
         return heading + html_table(headers, rows) + "\n" + filtered
 
     scanned = ", ".join(f"{e['sector']} ({e['label']})" for e in drilled) or "none"
@@ -294,11 +356,13 @@ def setups_section(drilled: list[dict]) -> str:
         "<h2>Setups today</h2>\n"
         f'<p class="note">From the largest holdings of the scanned sectors: {escape(scanned)}. '
         "Rel 3m is the 3-month return minus the sector ETF's return (percentage points); "
-        "vs 20 EMA is the close's distance from its 20-day EMA.</p>\n"
+        "vs 20 EMA is the close's distance from its 20-day EMA. Earnings is the next "
+        f"report date and how many days away it is, highlighted within "
+        f"{EARNINGS_SOON_DAYS} days.</p>\n"
         + idea_list(
             "Long ideas",
             "Pullback stocks in Leading sectors, beating their sector over 3 months.",
-            "Leading", ["Pullback"], long_side=True,
+            "Leading", ["Pullback"], long_side=True, hold_for_earnings=True,
         )
         + "\n"
         + idea_list(
@@ -332,6 +396,7 @@ def stocks_section(entry: dict) -> str:
             flag(s.AboveEMA50),
             flag(s.EMA20AboveEMA50),
             escape(str(s.Setup)),
+            earnings_cell(s.next_earnings),
         ]
         for s in stocks.itertuples(index=False)
     ]
@@ -343,7 +408,8 @@ def stocks_section(entry: dict) -> str:
         "show whether the price is above its 20-day and 50-day EMA, and whether "
         "the 20-day is above the 50-day.</p>\n"
         + html_table(
-            ["#", "Ticker", "Wt %", "Rel 3m", ">20d", ">50d", "20>50", "Setup"], rows
+            ["#", "Ticker", "Wt %", "Rel 3m", ">20d", ">50d", "20>50", "Setup", "Earnings"],
+            rows,
         )
     )
 
