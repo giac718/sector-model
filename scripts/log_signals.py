@@ -5,7 +5,7 @@ environment label and warning count:
 
   - a "sector" row for every sector: its status label and relative score
   - a "stock" row for every name in the three setup lists, plus the names
-    held back for earnings (list "held back")
+    held back for earnings (list "held back"), with its stop and risk %
 
 Rows already logged for the same price date are replaced, so rerunning on
 the same day never duplicates anything. Reads the files the other scripts
@@ -35,7 +35,10 @@ COLUMNS = [
     "price_date", "run_date", "env_label", "env_warnings", "item",
     "sector", "sector_label", "rel_score",
     "ticker", "list", "setup", "close", "rel_3m", "dist_ema20", "next_earnings",
+    "stop", "risk_pct",
 ]
+# Columns added after the log was started; older files may lack them.
+ADDED_COLUMNS = ["stop", "risk_pct"]
 HELD_BACK = "held back"
 
 
@@ -57,6 +60,8 @@ def stock_row(common: dict, stock, list_name: str) -> dict:
         "rel_3m": number(stock.RelReturn3m),
         "dist_ema20": number(stock.DistEMA20),
         "next_earnings": "" if pd.isna(stock.next_earnings) else str(stock.next_earnings),
+        "stop": number(stock.Stop),
+        "risk_pct": number(stock.RiskPct),
     }
 
 
@@ -107,12 +112,14 @@ def read_log() -> list[dict]:
         return []
     with open(LOG_PATH, newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
-        if reader.fieldnames != COLUMNS:
+        older = [c for c in COLUMNS if c not in ADDED_COLUMNS]
+        if reader.fieldnames not in (COLUMNS, older):
             raise RuntimeError(
                 f"{LOG_PATH} has unexpected columns; not touching it. "
                 f"Expected: {', '.join(COLUMNS)}"
             )
-        return list(reader)
+        # Rows written before a column existed get a blank for it.
+        return [{column: row.get(column) or "" for column in COLUMNS} for row in reader]
 
 
 def main() -> int:

@@ -86,8 +86,15 @@ jobs:
       - name: Log signals
         run: python scripts/log_signals.py
 
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: output
+
       - name: Commit the signals log
-        # Only log/signals.csv is staged, so no other generated file is committed.
+        # Runs after the Pages artifact is uploaded, so nothing here can alter
+        # what gets published. Only log/signals.csv is staged, so no other
+        # generated file is committed.
         run: |
           git add log/signals.csv
           if git diff --cached --quiet; then
@@ -98,12 +105,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "log: signals for $price_date"
-          git push
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: output
+          # Pick up anything pushed while this run was going. --autostash sets
+          # the other generated files aside during the rebase.
+          git pull --rebase --autostash
+          if ! git push; then
+            echo "Push rejected; pulling again and retrying once."
+            git pull --rebase --autostash
+            git push
+          fi
 
   deploy:
     needs: build

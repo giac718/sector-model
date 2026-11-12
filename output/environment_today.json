@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-11",
+  "date": "2026-11-12",
   "label": "Risk-on",
   "warnings_on": 0,
   "volatility_band": "Normal",
@@ -9,21 +9,21 @@
       "id": "spy_below_sma200",
       "name": "SPY below its 200-day average",
       "on": false,
-      "text": "SPY 759.81, above its 200-day average of 728.65",
+      "text": "SPY 757.12, above its 200-day average of 728.99",
       "values": {
-        "spy": 759.81,
-        "spy_sma200": 728.6512
+        "spy": 757.12,
+        "spy_sma200": 728.9866
       }
     },
     {
       "id": "credit_widening",
       "name": "Credit spread widening",
       "on": false,
-      "text": "Credit spread 1.51, up 0.05 from 1.46 21 trading days ago (warning above +0.15)",
+      "text": "Credit spread 1.51, up 0.07 from 1.44 21 trading days ago (warning above +0.15)",
       "values": {
         "credit_spread": 1.51,
-        "credit_spread_21d_ago": 1.46,
-        "change": 0.05
+        "credit_spread_21d_ago": 1.44,
+        "change": 0.07
       }
     },
     {
@@ -47,8 +47,8 @@
     }
   ],
   "series_as_of": {
-    "spy": "2026-11-11",
-    "credit_spread": "2026-11-09",
+    "spy": "2026-11-12",
+    "credit_spread": "2026-11-10",
     "vix": "2026-11-11",
     "vix3m": "2026-11-11"
   }

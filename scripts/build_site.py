@@ -1,8 +1,9 @@
 """Build the landing page for the published site: output/index.html.
 
-Shows the run date, the market environment, sector status, today's setups,
-the sector ranking, a link to the dashboard, and the stock tables for the
-scanned sectors (the strongest Leading and weakest Lagging ones). Reads the
+Shows the run date, the market environment, what changed since the previous
+logged day, sector status, today's setups with trade plans, a link to the
+dashboard, collapsible stock tables for the scanned sectors (the strongest
+Leading and weakest Lagging ones), and the sector ranking. Reads the
 files the other scripts write to output/, so run those first.
 """
 
@@ -21,6 +22,7 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 RANKS_PATH = OUTPUT_DIR / "ranks_today.csv"
 ENVIRONMENT_PATH = OUTPUT_DIR / "environment_today.json"
 STATUS_PATH = OUTPUT_DIR / "sector_status_today.json"
+LOG_PATH = PROJECT_ROOT / "log" / "signals.csv"
 PRICES_PATH = PROJECT_ROOT / "data" / "prices.csv"
 DASHBOARD_NAME = "dashboard.html"
 INDEX_PATH = OUTPUT_DIR / "index.html"
@@ -35,6 +37,9 @@ EARNINGS_SOON_DAYS = 14  # highlight earnings within this many calendar days
 EARNINGS_HOLD_DAYS = 7   # hold back Long ideas with earnings this close
 # Second share class -> the class to keep when both are in a setup list
 DUPLICATE_SHARE_CLASSES = {"GOOG": "GOOGL", "NWS": "NWSA", "FOX": "FOXA"}
+STOP_ATRS = 0.5          # stop sits this many ATRs beyond the EMA
+# Lists whose day-to-day membership is reported in the "What changed" box
+TRACKED_LISTS = ["Long ideas", "Put ideas"]
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
 
 SECTOR_NAMES = {
@@ -116,6 +121,20 @@ td.name { white-space: normal; }
 .status h3, .setups h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
 .setups h3 + .note { margin: 0.1rem 0 0.3rem; }
 .setups .table-wrap + .note { margin: 0.3rem 0 0; }
+.changes {
+  border: 1px solid GrayText;
+  border-radius: 0.4rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.changes h2 { margin: 0 0 0.3rem; font-size: 1.1rem; }
+.changes ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+.changes li { padding: 0.1rem 0; }
+.changes p { margin: 0.3rem 0 0; }
+details.stocks { border-top: 1px solid GrayText; }
+details.stocks:last-of-type { border-bottom: 1px solid GrayText; }
+details.stocks summary { padding: 0.7rem 0; font-size: 1.05rem; font-weight: 600; cursor: pointer; }
+details.stocks .table-wrap { margin-bottom: 1rem; }
 .earn-soon {
   padding: 0 0.3rem;
   border-radius: 0.3rem;
@@ -244,7 +263,8 @@ def load_stocks(sector: str) -> pd.DataFrame:
             f"{path} not found. Run scripts/sector_stocks.py {sector} first."
         )
     stocks = pd.read_csv(path)
-    missing = [c for c in ["Setup", "DistEMA20", "next_earnings"] if c not in stocks.columns]
+    needed = ["Setup", "Close", "DistEMA20", "DistEMA50", "ATRPct", "next_earnings"]
+    missing = [c for c in needed if c not in stocks.columns]
     if missing:
         raise RuntimeError(
             f"{path} has no {missing} column. Rerun scripts/sector_stocks.py {sector}."
@@ -306,10 +326,32 @@ def scanned_stocks(drilled: list[dict]) -> pd.DataFrame:
         return pd.concat(frames)
     return pd.DataFrame(
         columns=[
-            "Ticker", "Sector", "SectorLabel", "RelReturn3m", "DistEMA20", "Setup",
-            "next_earnings",
+            "Ticker", "Sector", "SectorLabel", "Close", "RelReturn3m", "DistEMA20",
+            "DistEMA50", "ATRPct", "Setup", "next_earnings",
         ]
     )
+
+
+def add_trade_plan(stocks: pd.DataFrame, long_side: bool) -> pd.DataFrame:
+    """Add Stop, RiskPct and RiskATR columns.
+
+    Longs: stop = 50 EMA minus half an ATR. Puts: stop = 20 EMA plus half an
+    ATR. Risk is the distance from the close to the stop, as a % of the close
+    and in ATRs. The EMAs are recovered from the close and its % distance.
+    """
+    stocks = stocks.copy()
+    atr = stocks["Close"] * stocks["ATRPct"] / 100
+    if long_side:
+        ema = stocks["Close"] / (1 + stocks["DistEMA50"] / 100)
+        stocks["Stop"] = ema - STOP_ATRS * atr
+        risk = stocks["Close"] - stocks["Stop"]
+    else:
+        ema = stocks["Close"] / (1 + stocks["DistEMA20"] / 100)
+        stocks["Stop"] = ema + STOP_ATRS * atr
+        risk = stocks["Stop"] - stocks["Close"]
+    stocks["RiskPct"] = risk / stocks["Close"] * 100
+    stocks["RiskATR"] = risk / atr
+    return stocks
 
 
 def select_setups(stocks: pd.DataFrame, spec: dict) -> dict:
@@ -319,6 +361,7 @@ def select_setups(stocks: pd.DataFrame, spec: dict) -> dict:
     picks = stocks[
         (stocks["SectorLabel"] == spec["label"]) & stocks["Setup"].isin(spec["setups"])
     ]
+    picks = add_trade_plan(picks, long_side)
     dropped = []
 
     keep = picks["RelReturn3m"] > 0 if long_side else picks["RelReturn3m"] < 0
@@ -385,7 +428,7 @@ def setup_list_html(result: dict) -> str:
     )
     if picks.empty:
         return heading + "<p>None today</p>\n" + filtered
-    headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings"]
+    headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings", "Stop", "Risk %", "ATRs"]
     rows = [
         [
             escape(str(r.Ticker)),
@@ -393,6 +436,9 @@ def setup_list_html(result: dict) -> str:
             signed(r.RelReturn3m),
             "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
             earnings_cell(r.next_earnings),
+            "n/a" if pd.isna(r.Stop) else f"{r.Stop:.2f}",
+            "n/a" if pd.isna(r.RiskPct) else f"{r.RiskPct:.1f}%",
+            "n/a" if pd.isna(r.RiskATR) else f"{r.RiskATR:.1f}",
         ]
         for r in picks.itertuples(index=False)
     ]
@@ -403,7 +449,7 @@ def setup_list_html(result: dict) -> str:
     return heading + html_table(headers, rows) + "\n" + filtered
 
 
-def setups_section(drilled: list[dict]) -> str:
+def setups_section(drilled: list[dict], lists: list[dict]) -> str:
     """Trade idea lists built from the setup tags of the scanned sectors."""
     scanned = ", ".join(f"{e['sector']} ({e['label']})" for e in drilled) or "none"
     return (
@@ -413,8 +459,11 @@ def setups_section(drilled: list[dict]) -> str:
         "Rel 3m is the 3-month return minus the sector ETF's return (percentage points); "
         "vs 20 EMA is the close's distance from its 20-day EMA. Earnings is the next "
         f"report date and how many days away it is, highlighted within "
-        f"{EARNINGS_SOON_DAYS} days.</p>\n"
-        + "\n".join(setup_list_html(result) for result in setup_lists(drilled))
+        f"{EARNINGS_SOON_DAYS} days. Stop is the 50-day EMA minus {STOP_ATRS} ATR for "
+        f"longs and the 20-day EMA plus {STOP_ATRS} ATR for puts (14-day ATR). Risk % "
+        "is the distance from the close to the stop, and ATRs is that same "
+        "distance in ATRs.</p>\n"
+        + "\n".join(setup_list_html(result) for result in lists)
         + "\n</section>"
     )
 
@@ -438,7 +487,9 @@ def stocks_section(entry: dict) -> str:
     ]
     name = SECTOR_NAMES.get(sector, "")
     return (
-        f"<h2>{escape(sector)} {escape(name)} ({escape(entry['label'])}): top holdings</h2>\n"
+        '<details class="stocks">\n'
+        f"<summary>{escape(sector)} {escape(name)} ({escape(entry['label'])}): "
+        f"top {len(rows)} holdings</summary>\n"
         f'<p class="note">Largest holdings, ranked by 3-month return minus '
         f"{escape(sector)}'s return (percentage points). The next three columns "
         "show whether the price is above its 20-day and 50-day EMA, and whether "
@@ -447,7 +498,71 @@ def stocks_section(entry: dict) -> str:
             ["#", "Ticker", "Wt %", "Rel 3m", ">20d", ">50d", "20>50", "Setup", "Earnings"],
             rows,
         )
+        + "\n</details>"
     )
+
+
+def changes_section(lists: list[dict]) -> str:
+    """What changed since the previous price date in log/signals.csv."""
+    environment = json.loads(ENVIRONMENT_PATH.read_text(encoding="utf-8"))
+    status = load_status()
+    today = status["date"]
+
+    log = pd.read_csv(LOG_PATH, dtype=str).fillna("") if LOG_PATH.exists() else None
+    earlier = sorted(set(log["price_date"][log["price_date"] < today])) if log is not None else []
+    if not earlier:
+        return (
+            '<section class="changes">\n<h2>What changed</h2>\n'
+            "<p>First day of the log; changes start tomorrow.</p>\n</section>"
+        )
+    previous_date = earlier[-1]
+    previous = log[log["price_date"] == previous_date]
+
+    items = []
+    old_environment = previous["env_label"].iloc[0]
+    if old_environment != environment["label"]:
+        items.append(
+            f"Environment: {escape(old_environment)} → <strong>{escape(environment['label'])}</strong>"
+        )
+
+    old_labels = dict(
+        previous.loc[previous["item"] == "sector", ["sector", "sector_label"]].values
+    )
+    for sector in status["sectors"]:
+        old = old_labels.get(sector["sector"])
+        if old is not None and old != sector["label"]:
+            name = SECTOR_NAMES.get(sector["sector"], "")
+            items.append(
+                f"{escape(sector['sector'])} {escape(name)}: {escape(old)} → "
+                f"<strong>{escape(sector['label'])}</strong>"
+            )
+
+    held_back = {t for result in lists for t in result["held_back"]["Ticker"]}
+    for result in lists:
+        title = result["title"]
+        if title not in TRACKED_LISTS:
+            continue
+        now = list(result["picks"]["Ticker"])
+        before = list(previous.loc[previous["list"] == title.lower(), "ticker"])
+        added = [t for t in now if t not in before]
+        removed = [t for t in before if t not in now]
+        if added:
+            items.append(f"New in {escape(title)}: {escape(', '.join(added))}")
+        if removed:
+            names = ", ".join(
+                t + (" (held back for earnings)" if t in held_back else "") for t in removed
+            )
+            items.append(f"Dropped from {escape(title)}: {escape(names)}")
+
+    if not items:
+        body = f"<p>No changes since {escape(previous_date)}.</p>"
+    else:
+        body = (
+            f'<p class="note">Since the {escape(previous_date)} close.</p>\n<ul>\n'
+            + "\n".join(f"<li>{item}</li>" for item in items)
+            + "\n</ul>"
+        )
+    return f'<section class="changes">\n<h2>What changed</h2>\n{body}\n</section>'
 
 
 def environment_section() -> str:
@@ -557,6 +672,7 @@ def build_page() -> str:
     if ranks.empty:
         raise RuntimeError(f"{RANKS_PATH} has no rows.")
     drilled = drill_sectors(load_status())
+    lists = setup_lists(drilled)
 
     run_time = datetime.now(MARKET_TIMEZONE)
     meta = f"Run date: {run_time:%A, %B %-d, %Y} ({run_time:%H:%M} US Eastern)"
@@ -564,8 +680,7 @@ def build_page() -> str:
     if through:
         meta += f"<br>Prices through the {escape(through)} close"
 
-    sections = [ranking_section(ranks)]
-    sections += [stocks_section(entry) for entry in drilled]
+    stock_tables = "\n".join(stocks_section(entry) for entry in drilled)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -579,10 +694,14 @@ def build_page() -> str:
 <h1>Sector rotation</h1>
 <p class="meta">{meta}</p>
 {environment_section()}
+{changes_section(lists)}
 {status_section()}
-{setups_section(drilled)}
+{setups_section(drilled, lists)}
 <p><a class="button" href="{DASHBOARD_NAME}">Open the dashboard</a></p>
-{chr(10).join(sections)}
+<h2>Stock tables</h2>
+<p class="note">Tap a sector to show its largest holdings.</p>
+{stock_tables}
+{ranking_section(ranks)}
 </body>
 </html>
 """

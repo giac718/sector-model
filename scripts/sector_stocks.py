@@ -5,8 +5,8 @@ Usage:  python scripts/sector_stocks.py XLV
 Takes the fund's 25 largest holdings (from the SPDR daily holdings file, or
 data/holdings_fallback.json if that download fails), downloads about a year of
 prices, and for each stock reports its 3-month return relative to the sector
-ETF, three trend flags, its distance from the 20 and 50-day EMA, a setup
-tag, and its next earnings date. Saves the table to output/stocks_<TICKER>.csv.
+ETF, three trend flags, its distance from the 20 and 50-day EMA, its 14-day
+ATR as a % of the close, a setup tag, and its next earnings date. Saves the table to output/stocks_<TICKER>.csv.
 """
 
 import argparse
@@ -43,6 +43,8 @@ HISTORY_DAYS = 400       # calendar days of prices, a bit over one year
 RETURN_WINDOW = 63       # trading days, about 3 months
 FAST_EMA = 20
 SLOW_EMA = 50
+ATR_DAYS = 14
+PRICE_FIELDS = ["Close", "High", "Low"]
 
 EVENT_MOVER_RETURN = 50   # relative 3-month return above this, in % points
 EXTENDED_DISTANCE = 10    # % above the 50 EMA
@@ -103,7 +105,8 @@ def get_holdings(sector: str) -> tuple[pd.DataFrame, str]:
 
 
 def download_prices(tickers: list[str]) -> pd.DataFrame:
-    """Adjusted closes, one column per ticker, retrying on failure or empty result."""
+    """Adjusted daily Close, High and Low for every ticker, retrying on failure
+    or an empty result. Columns are (field, ticker)."""
     start = (date.today() - timedelta(days=HISTORY_DAYS)).isoformat()
     # yfinance's `end` is exclusive, so ask for tomorrow to include today.
     end = (date.today() + timedelta(days=1)).isoformat()
@@ -115,9 +118,8 @@ def download_prices(tickers: list[str]) -> pd.DataFrame:
                 tickers, start=start, end=end, auto_adjust=True, progress=False
             )
             if raw is not None and not raw.empty:
-                closes = raw["Close"]
-                if not closes.dropna(how="all").empty:
-                    return closes.dropna(how="all").sort_index()
+                if not raw["Close"].dropna(how="all").empty:
+                    return raw[PRICE_FIELDS].dropna(how="all").sort_index()
             last_error = "download came back empty"
         except Exception as exc:  # yfinance raises a variety of error types
             last_error = f"{type(exc).__name__}: {exc}"
@@ -171,8 +173,33 @@ def setup_tag(rel_return: float, dist_fast: float, dist_slow: float, fast_above_
     return "Mixed"
 
 
-def analyse(holdings: pd.DataFrame, prices: pd.DataFrame, sector: str):
-    """Build the ranked table. Returns (table, tickers skipped for lack of prices)."""
+def atr_percent(bars: pd.DataFrame) -> float:
+    """14-day average true range (Wilder's smoothing) as a % of the last close.
+
+    `bars` has Close, High and Low columns for one stock. NaN if too short.
+    """
+    bars = bars.dropna()
+    if len(bars) <= ATR_DAYS:
+        return float("nan")
+    previous_close = bars["Close"].shift()
+    true_range = pd.concat(
+        [
+            bars["High"] - bars["Low"],
+            (bars["High"] - previous_close).abs(),
+            (bars["Low"] - previous_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1).iloc[1:]
+    atr = true_range.ewm(alpha=1 / ATR_DAYS, adjust=False).mean().iloc[-1]
+    return atr / bars["Close"].iloc[-1] * 100
+
+
+def analyse(holdings: pd.DataFrame, bars: pd.DataFrame, sector: str):
+    """Build the ranked table. Returns (table, tickers skipped for lack of prices).
+
+    `bars` is the download_prices() result: (field, ticker) columns.
+    """
+    prices = bars["Close"]
     sector_return = window_return(prices[sector].dropna())
     rows, skipped = [], []
 
@@ -202,6 +229,9 @@ def analyse(holdings: pd.DataFrame, prices: pd.DataFrame, sector: str):
             "EMA20AboveEMA50": fast_above_slow,
             "DistEMA20": dist_fast,
             "DistEMA50": dist_slow,
+            "ATRPct": atr_percent(
+                bars.xs(yahoo_ticker, axis=1, level=1)[PRICE_FIELDS]
+            ),
             "Setup": setup_tag(rel_return, dist_fast, dist_slow, fast_above_slow),
         })
 
@@ -295,6 +325,7 @@ def print_table(table: pd.DataFrame) -> None:
         "EMA20AboveEMA50": "EMA20>EMA50",
         "DistEMA20": "vs EMA20 %",
         "DistEMA50": "vs EMA50 %",
+        "ATRPct": "ATR %",
         "next_earnings": "Next earnings",
         "earnings_soon": "Soon",
     })
@@ -309,6 +340,7 @@ def print_table(table: pd.DataFrame) -> None:
             formatters={
                 "Weight %": "{:.1f}".format,
                 "Close": "{:.2f}".format,
+                "ATR %": lambda v: "n/a" if pd.isna(v) else f"{v:.1f}",
                 "Rel 3m %": signed,
                 "vs EMA20 %": signed,
                 "vs EMA50 %": signed,
@@ -333,14 +365,15 @@ def main() -> int:
         holdings, source = get_holdings(sector)
         print(f"Holdings source: {source}")
         yahoo_tickers = [t.replace(".", "-") for t in holdings["Ticker"]]
-        prices = drop_unfinished_day(download_prices([sector, *yahoo_tickers]))
+        bars = drop_unfinished_day(download_prices([sector, *yahoo_tickers]))
+        prices = bars["Close"]
         if sector not in prices or prices[sector].dropna().empty:
             raise RuntimeError(f"No price data for {sector} itself.")
     except (RuntimeError, OSError, KeyError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
 
-    table, skipped = analyse(holdings, prices, sector)
+    table, skipped = analyse(holdings, bars, sector)
     if table.empty:
         print("No holdings had price data.", file=sys.stderr)
         return 1
