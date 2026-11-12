@@ -5,7 +5,8 @@ Usage:  python scripts/sector_stocks.py XLV
 Takes the fund's 25 largest holdings (from the SPDR daily holdings file, or
 data/holdings_fallback.json if that download fails), downloads about a year of
 prices, and for each stock reports its 3-month return relative to the sector
-ETF plus three trend flags. Saves the table to output/stocks_<TICKER>.csv.
+ETF, three trend flags, its distance from the 20 and 50-day EMA, and a
+setup tag. Saves the table to output/stocks_<TICKER>.csv.
 """
 
 import argparse
@@ -42,6 +43,10 @@ HISTORY_DAYS = 400       # calendar days of prices, a bit over one year
 RETURN_WINDOW = 63       # trading days, about 3 months
 FAST_EMA = 20
 SLOW_EMA = 50
+
+EVENT_MOVER_RETURN = 50   # relative 3-month return above this, in % points
+EXTENDED_DISTANCE = 10    # % above the 50 EMA
+PULLBACK_DISTANCE = 2     # % either side of the 20 EMA
 
 MAX_ATTEMPTS = 3
 RETRY_WAIT_SECONDS = 5
@@ -144,6 +149,25 @@ def window_return(series: pd.Series) -> float:
     return series.iloc[-1] / series.iloc[-1 - RETURN_WINDOW] - 1
 
 
+def setup_tag(rel_return: float, dist_fast: float, dist_slow: float, fast_above_slow) -> str:
+    """Setup label from the first rule that matches.
+
+    Distances are the close's % distance from the 20 and 50 EMA. Missing
+    values (too little history) fail every comparison and fall through to "Mixed".
+    """
+    if rel_return > EVENT_MOVER_RETURN:
+        return "Event mover"
+    if dist_slow < 0:
+        return "Breaking down"
+    if dist_slow > EXTENDED_DISTANCE:
+        return "Extended"
+    if dist_slow > 0 and fast_above_slow and abs(dist_fast) <= PULLBACK_DISTANCE:
+        return "Pullback"
+    if dist_fast > 0 and dist_slow > 0 and fast_above_slow:
+        return "Trending"
+    return "Mixed"
+
+
 def analyse(holdings: pd.DataFrame, prices: pd.DataFrame, sector: str):
     """Build the ranked table. Returns (table, tickers skipped for lack of prices)."""
     sector_return = window_return(prices[sector].dropna())
@@ -161,13 +185,20 @@ def analyse(holdings: pd.DataFrame, prices: pd.DataFrame, sector: str):
         slow = series.ewm(span=SLOW_EMA, adjust=False).mean().iloc[-1]
         has_fast = len(series) >= FAST_EMA
         has_slow = len(series) >= SLOW_EMA
+        rel_return = (window_return(series) - sector_return) * 100
+        dist_fast = (price / fast - 1) * 100 if has_fast else float("nan")
+        dist_slow = (price / slow - 1) * 100 if has_slow else float("nan")
+        fast_above_slow = bool(fast > slow) if has_slow else None
         rows.append({
             "Ticker": holding.Ticker,
             "Weight": holding.Weight,
-            "RelReturn3m": (window_return(series) - sector_return) * 100,
+            "RelReturn3m": rel_return,
             "AboveEMA20": bool(price > fast) if has_fast else None,
             "AboveEMA50": bool(price > slow) if has_slow else None,
-            "EMA20AboveEMA50": bool(fast > slow) if has_slow else None,
+            "EMA20AboveEMA50": fast_above_slow,
+            "DistEMA20": dist_fast,
+            "DistEMA50": dist_slow,
+            "Setup": setup_tag(rel_return, dist_fast, dist_slow, fast_above_slow),
         })
 
     table = pd.DataFrame(rows).sort_values(
@@ -187,14 +218,22 @@ def print_table(table: pd.DataFrame) -> None:
         "AboveEMA20": ">EMA20",
         "AboveEMA50": ">EMA50",
         "EMA20AboveEMA50": "EMA20>EMA50",
+        "DistEMA20": "vs EMA20 %",
+        "DistEMA50": "vs EMA50 %",
     })
+
+    def signed(value):
+        return "n/a" if pd.isna(value) else f"{value:+.1f}"
+
     print(
         shown.to_string(
             index=False,
             na_rep="n/a",
             formatters={
                 "Weight %": "{:.1f}".format,
-                "Rel 3m %": lambda v: "n/a" if pd.isna(v) else f"{v:+.1f}",
+                "Rel 3m %": signed,
+                "vs EMA20 %": signed,
+                "vs EMA50 %": signed,
                 ">EMA20": flag,
                 ">EMA50": flag,
                 "EMA20>EMA50": flag,

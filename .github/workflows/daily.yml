@@ -64,13 +64,12 @@ jobs:
       - name: Build dashboard
         run: python scripts/build_dashboard.py
 
-      - name: Rank stocks in the top 3 sectors
+      - name: Rank stocks in the top Leading and weakest Lagging sectors
+        # The 3 Leading sectors with the highest relative score and the 2 Lagging
+        # sectors with the lowest, from output/sector_status_today.json.
         run: |
-          sectors=$(python -c "import pandas as pd; print(' '.join(pd.read_csv('output/ranks_today.csv').sort_values('Rank')['Sector'].head(3)))")
-          if [ "$(echo "$sectors" | wc -w)" -ne 3 ]; then
-            echo "::error::Expected 3 top sectors in output/ranks_today.csv, got: '$sectors'"
-            exit 1
-          fi
+          sectors=$(python scripts/build_site.py --list-sectors)
+          echo "Sectors to scan: ${sectors:-none}"
           for sector in $sectors; do
             echo "::group::sector_stocks.py $sector"
             python scripts/sector_stocks.py "$sector"

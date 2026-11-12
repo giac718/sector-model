@@ -1,10 +1,12 @@
 """Build the landing page for the published site: output/index.html.
 
-Shows the run date, today's sector ranking, a link to the dashboard, and the
-stock tables for the top 3 ranked sectors. Reads output/ranks_today.csv and
-output/stocks_<TICKER>.csv, so run rank_sectors.py and sector_stocks.py first.
+Shows the run date, the market environment, sector status, today's setups,
+the sector ranking, a link to the dashboard, and the stock tables for the
+scanned sectors (the strongest Leading and weakest Lagging ones). Reads the
+files the other scripts write to output/, so run those first.
 """
 
+import argparse
 import json
 import sys
 from datetime import datetime
@@ -23,7 +25,12 @@ PRICES_PATH = PROJECT_ROOT / "data" / "prices.csv"
 DASHBOARD_NAME = "dashboard.html"
 INDEX_PATH = OUTPUT_DIR / "index.html"
 
-TOP_SECTORS = 3
+LEADING_SECTORS = 3      # strongest Leading sectors to scan for stocks
+LAGGING_SECTORS = 2      # weakest Lagging sectors to scan for stocks
+BORDERLINE_SCORE = 1     # relative score within this many points of zero
+BORDERLINE_DAYS = 5      # or label held for fewer than this many days
+WAIT_LIST_LIMIT = 10     # names shown under "Wait for pullback"
+PUT_LIST_LIMIT = 10      # names shown under "Put ideas"
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
 
 SECTOR_NAMES = {
@@ -102,7 +109,18 @@ td.name { white-space: normal; }
 }
 .env .state.on { background: #c02b2b; border-color: #c02b2b; color: #ffffff; }
 .env .note { margin: 0.4rem 0 0; }
-.status h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
+.status h3, .setups h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
+.setups h3 + .note { margin: 0.1rem 0 0.3rem; }
+.setups .table-wrap + .note { margin: 0.3rem 0 0; }
+.tag {
+  display: inline-block;
+  margin-left: 0.3rem;
+  padding: 0 0.35rem;
+  border: 1px solid GrayText;
+  border-radius: 0.3rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
 .status .guidance { margin: 0.1rem 0 0.3rem; font-weight: 600; }
 .button {
   display: inline-block;
@@ -168,13 +186,142 @@ def ranking_section(ranks: pd.DataFrame) -> str:
     )
 
 
-def stocks_section(sector: str, rank: int) -> str:
+def load_status() -> dict:
+    if not STATUS_PATH.exists():
+        raise RuntimeError(f"{STATUS_PATH} not found. Run scripts/sector_status.py first.")
+    return json.loads(STATUS_PATH.read_text(encoding="utf-8"))
+
+
+def drill_sectors(status: dict) -> list[dict]:
+    """Sectors whose stocks are scanned: the strongest Leading and weakest Lagging.
+
+    The workflow runs sector_stocks.py for exactly this list
+    (python scripts/build_site.py --list-sectors).
+    """
+    leading = [s for s in status["sectors"] if s["label"] == "Leading"]
+    lagging = [s for s in status["sectors"] if s["label"] == "Lagging"]
+    leading.sort(key=lambda s: s["rel_score"], reverse=True)
+    lagging.sort(key=lambda s: s["rel_score"])
+    return leading[:LEADING_SECTORS] + lagging[:LAGGING_SECTORS]
+
+
+def load_stocks(sector: str) -> pd.DataFrame:
     path = OUTPUT_DIR / f"stocks_{sector}.csv"
     if not path.exists():
         raise RuntimeError(
             f"{path} not found. Run scripts/sector_stocks.py {sector} first."
         )
     stocks = pd.read_csv(path)
+    missing = [c for c in ["Setup", "DistEMA20"] if c not in stocks.columns]
+    if missing:
+        raise RuntimeError(
+            f"{path} has no {missing} column. Rerun scripts/sector_stocks.py {sector}."
+        )
+    return stocks
+
+
+def setups_section(drilled: list[dict]) -> str:
+    """Trade idea lists built from the setup tags of the scanned sectors."""
+    frames = []
+    for entry in drilled:
+        stocks = load_stocks(entry["sector"])
+        stocks["Sector"] = entry["sector"]
+        stocks["SectorLabel"] = entry["label"]
+        frames.append(stocks)
+    stocks = pd.concat(frames) if frames else pd.DataFrame(
+        columns=["Ticker", "Sector", "SectorLabel", "RelReturn3m", "DistEMA20", "Setup"]
+    )
+
+    def idea_list(
+        title: str,
+        note: str,
+        label: str,
+        setups: list[str],
+        long_side: bool,
+        limit: int | None = None,
+        below_fast_ema: bool = False,
+    ) -> str:
+        """One list. Long-side lists keep relative return above 0, strongest
+        first; put-side lists keep it below 0, weakest first."""
+        picks = stocks[(stocks["SectorLabel"] == label) & stocks["Setup"].isin(setups)]
+        dropped = []  # reasons, with counts, for the line under the list
+
+        keep = picks["RelReturn3m"] > 0 if long_side else picks["RelReturn3m"] < 0
+        if (~keep).any():
+            side = "at or below" if long_side else "at or above"
+            dropped.append(f"{(~keep).sum()} with relative 3-month return {side} 0")
+        picks = picks[keep]
+
+        if below_fast_ema:
+            keep = picks["DistEMA20"] < 0
+            if (~keep).any():
+                dropped.append(f"{(~keep).sum()} with the close at or above the 20 EMA")
+            picks = picks[keep]
+
+        picks = picks.sort_values("RelReturn3m", ascending=not long_side)
+        if limit is not None and len(picks) > limit:
+            which = "strongest" if long_side else "weakest"
+            dropped.append(f"{len(picks) - limit} beyond the {limit} {which}")
+            picks = picks.head(limit)
+
+        filtered = (
+            f'<p class="note">Filtered out: {escape("; ".join(dropped))}.</p>'
+            if dropped
+            else '<p class="note">Nothing filtered out.</p>'
+        )
+        heading = f"<h3>{escape(title)} ({len(picks)})</h3>\n<p class=\"note\">{escape(note)}</p>\n"
+        if picks.empty:
+            return heading + "<p>None today</p>\n" + filtered
+        headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA"]
+        rows = [
+            [
+                escape(str(r.Ticker)),
+                escape(r.Sector),
+                signed(r.RelReturn3m),
+                "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
+            ]
+            for r in picks.itertuples(index=False)
+        ]
+        if len(setups) > 1:
+            headers.append("Setup")
+            for row, r in zip(rows, picks.itertuples(index=False)):
+                row.append(escape(r.Setup))
+        return heading + html_table(headers, rows) + "\n" + filtered
+
+    scanned = ", ".join(f"{e['sector']} ({e['label']})" for e in drilled) or "none"
+    return (
+        '<section class="setups">\n'
+        "<h2>Setups today</h2>\n"
+        f'<p class="note">From the largest holdings of the scanned sectors: {escape(scanned)}. '
+        "Rel 3m is the 3-month return minus the sector ETF's return (percentage points); "
+        "vs 20 EMA is the close's distance from its 20-day EMA.</p>\n"
+        + idea_list(
+            "Long ideas",
+            "Pullback stocks in Leading sectors, beating their sector over 3 months.",
+            "Leading", ["Pullback"], long_side=True,
+        )
+        + "\n"
+        + idea_list(
+            "Wait for pullback",
+            f"Extended or Trending stocks in Leading sectors, beating their sector "
+            f"over 3 months. The {WAIT_LIST_LIMIT} strongest.",
+            "Leading", ["Extended", "Trending"], long_side=True, limit=WAIT_LIST_LIMIT,
+        )
+        + "\n"
+        + idea_list(
+            "Put ideas",
+            f"Breaking down stocks in Lagging sectors, trailing their sector over "
+            f"3 months and below the 20 EMA. The {PUT_LIST_LIMIT} weakest.",
+            "Lagging", ["Breaking down"], long_side=False, limit=PUT_LIST_LIMIT,
+            below_fast_ema=True,
+        )
+        + "\n</section>"
+    )
+
+
+def stocks_section(entry: dict) -> str:
+    sector = entry["sector"]
+    stocks = load_stocks(sector)
     rows = [
         [
             str(s.Rank),
@@ -184,18 +331,19 @@ def stocks_section(sector: str, rank: int) -> str:
             flag(s.AboveEMA20),
             flag(s.AboveEMA50),
             flag(s.EMA20AboveEMA50),
+            escape(str(s.Setup)),
         ]
         for s in stocks.itertuples(index=False)
     ]
     name = SECTOR_NAMES.get(sector, "")
     return (
-        f"<h2>#{rank} {escape(sector)} {escape(name)}: top holdings</h2>\n"
+        f"<h2>{escape(sector)} {escape(name)} ({escape(entry['label'])}): top holdings</h2>\n"
         f'<p class="note">Largest holdings, ranked by 3-month return minus '
-        f"{escape(sector)}'s return (percentage points). The last three columns "
+        f"{escape(sector)}'s return (percentage points). The next three columns "
         "show whether the price is above its 20-day and 50-day EMA, and whether "
         "the 20-day is above the 50-day.</p>\n"
         + html_table(
-            ["#", "Ticker", "Wt %", "Rel 3m", ">20d", ">50d", "20>50"], rows
+            ["#", "Ticker", "Wt %", "Rel 3m", ">20d", ">50d", "20>50", "Setup"], rows
         )
     )
 
@@ -234,9 +382,14 @@ def environment_section() -> str:
 
 def status_section() -> str:
     """Sectors grouped by status label, from output/sector_status_today.json."""
-    if not STATUS_PATH.exists():
-        raise RuntimeError(f"{STATUS_PATH} not found. Run scripts/sector_status.py first.")
-    status = json.loads(STATUS_PATH.read_text(encoding="utf-8"))
+    status = load_status()
+
+    def name_cell(s: dict) -> str:
+        name = escape(SECTOR_NAMES.get(s["sector"], ""))
+        borderline = (
+            abs(s["rel_score"]) <= BORDERLINE_SCORE or s["days_in_label"] < BORDERLINE_DAYS
+        )
+        return name + (' <span class="tag">borderline</span>' if borderline else "")
 
     groups = []
     for label, guidance in STATUS_GUIDANCE.items():
@@ -252,7 +405,7 @@ def status_section() -> str:
         rows = [
             [
                 escape(s["sector"]),
-                escape(SECTOR_NAMES.get(s["sector"], "")),
+                name_cell(s),
                 signed(s["score"]),
                 signed(s["rel_score"]),
                 signed(s["change"]),
@@ -274,7 +427,9 @@ def status_section() -> str:
         "score of all sectors, and Change is Rel versus "
         f'{status["change_days"]} trading days earlier (all in percentage points). '
         "Labels come from Rel and Change. Held is how many trading days in a row "
-        "the sector has had its label.</p>\n"
+        "the sector has had its label. A sector is marked borderline when Rel is "
+        f"within {BORDERLINE_SCORE} point of zero or it has held its label for fewer "
+        f"than {BORDERLINE_DAYS} days.</p>\n"
         + "\n".join(groups)
         + "\n</section>"
     )
@@ -299,7 +454,7 @@ def build_page() -> str:
     ranks = pd.read_csv(RANKS_PATH).sort_values("Rank")
     if ranks.empty:
         raise RuntimeError(f"{RANKS_PATH} has no rows.")
-    top = ranks.head(TOP_SECTORS)
+    drilled = drill_sectors(load_status())
 
     run_time = datetime.now(MARKET_TIMEZONE)
     meta = f"Run date: {run_time:%A, %B %-d, %Y} ({run_time:%H:%M} US Eastern)"
@@ -308,7 +463,7 @@ def build_page() -> str:
         meta += f"<br>Prices through the {escape(through)} close"
 
     sections = [ranking_section(ranks)]
-    sections += [stocks_section(r.Sector, r.Rank) for r in top.itertuples(index=False)]
+    sections += [stocks_section(entry) for entry in drilled]
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -323,6 +478,7 @@ def build_page() -> str:
 <p class="meta">{meta}</p>
 {environment_section()}
 {status_section()}
+{setups_section(drilled)}
 <p><a class="button" href="{DASHBOARD_NAME}">Open the dashboard</a></p>
 {chr(10).join(sections)}
 </body>
@@ -331,7 +487,18 @@ def build_page() -> str:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument(
+        "--list-sectors",
+        action="store_true",
+        help="print the sectors whose stocks should be scanned, then exit",
+    )
+    args = parser.parse_args()
+
     try:
+        if args.list_sectors:
+            print(" ".join(entry["sector"] for entry in drill_sectors(load_status())))
+            return 0
         page = build_page()
     except RuntimeError as exc:
         print(exc, file=sys.stderr)
