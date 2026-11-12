@@ -377,7 +377,7 @@ def setups_section(drilled: list[dict]) -> str:
             f"Breaking down stocks in Lagging sectors, trailing their sector over "
             f"3 months and below the 20 EMA. The {PUT_LIST_LIMIT} weakest.",
             "Lagging", ["Breaking down"], long_side=False, limit=PUT_LIST_LIMIT,
-            below_fast_ema=True,
+            below_fast_ema=True, hold_for_earnings=True,
         )
         + "\n</section>"
     )
