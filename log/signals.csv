@@ -34,3 +34,43 @@ price_date,run_date,env_label,env_warnings,item,sector,sector_label,rel_score,ti
 2026-11-11,2026-11-12,Risk-on,0,stock,XLK,Lagging,,CSCO,held back,Breaking down,100.7600,-2.3616,-2.8366,2026-11-12
 2026-11-11,2026-11-12,Risk-on,0,stock,XLK,Lagging,,PANW,held back,Breaking down,334.4700,-7.0426,-5.1611,2026-11-18
 2026-11-11,2026-11-12,Risk-on,0,stock,XLK,Lagging,,NVDA,held back,Breaking down,173.7300,-14.3079,-12.9837,2026-11-17
+2026-11-12,2026-11-12,Risk-on,0,sector,XLV,Leading,13.8442,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLF,Leading,4.4170,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLP,Leading,4.2122,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLY,Leading,1.2858,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLE,Weakening,1.2132,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLRE,Leading,0.0834,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLB,Improving,-0.2177,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLU,Improving,-1.5747,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLI,Lagging,-6.0420,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLC,Lagging,-7.7540,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,sector,XLK,Lagging,-9.4674,,,,,,,
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,V,long ideas,Pullback,420.3100,15.1957,1.8691,2027-01-26
+2026-11-12,2026-11-12,Risk-on,0,stock,XLP,Leading,,KDP,long ideas,Pullback,35.4200,7.0072,-0.5138,2027-02-23
+2026-11-12,2026-11-12,Risk-on,0,stock,XLV,Leading,,TMO,long ideas,Pullback,699.4400,6.3310,0.6624,2027-01-28
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,MCO,long ideas,Pullback,506.5600,4.0138,1.8074,2027-02-17
+2026-11-12,2026-11-12,Risk-on,0,stock,XLP,Leading,,DG,long ideas,Pullback,134.6100,3.2644,0.9611,2026-12-03
+2026-11-12,2026-11-12,Risk-on,0,stock,XLV,Leading,,DHR,long ideas,Pullback,232.1600,2.2245,0.7014,2027-01-27
+2026-11-12,2026-11-12,Risk-on,0,stock,XLP,Leading,,EL,wait for pullback,Trending,110.5100,22.3181,2.3220,2027-02-03
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,CME,wait for pullback,Trending,315.5000,17.0472,4.5018,2027-02-03
+2026-11-12,2026-11-12,Risk-on,0,stock,XLP,Leading,,KR,wait for pullback,Trending,69.8100,16.6747,4.5772,2026-12-03
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,BRK.B,wait for pullback,Trending,589.8300,16.5826,5.5564,2027-03-01
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,ICE,wait for pullback,Trending,177.8600,14.8907,5.3965,2027-02-04
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,MA,wait for pullback,Trending,652.6000,14.3676,2.3846,2027-01-28
+2026-11-12,2026-11-12,Risk-on,0,stock,XLP,Leading,,MO,wait for pullback,Trending,77.9200,14.0252,3.1341,2027-01-28
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,PGR,wait for pullback,Trending,235.4900,11.9661,3.2048,2027-01-27
+2026-11-12,2026-11-12,Risk-on,0,stock,XLF,Leading,,SPGI,wait for pullback,Trending,468.5100,11.6806,2.4403,2027-02-09
+2026-11-12,2026-11-12,Risk-on,0,stock,XLV,Leading,,MCK,wait for pullback,Extended,1077.0500,11.4191,5.1646,2027-02-03
+2026-11-12,2026-11-12,Risk-on,0,stock,XLC,Lagging,,RDDT,put ideas,Breaking down,99.5500,-39.6431,-14.2584,2027-02-04
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,SNDK,put ideas,Breaking down,937.4600,-34.4363,-16.5969,2027-02-15
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,INTC,put ideas,Breaking down,61.2000,-31.8525,-16.5363,2027-01-28
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,LRCX,put ideas,Breaking down,233.7800,-21.1457,-2.7114,2027-01-27
+2026-11-12,2026-11-12,Risk-on,0,stock,XLC,Lagging,,SKYD,put ideas,Breaking down,7.5900,-20.3439,-6.4475,2027-02-24
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,MRVL,put ideas,Breaking down,164.4500,-17.4737,-13.8330,2026-12-01
+2026-11-12,2026-11-12,Risk-on,0,stock,XLC,Lagging,,NFLX,put ideas,Breaking down,62.6900,-15.3346,-3.6711,2027-01-19
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,KLAC,put ideas,Breaking down,157.3000,-14.2587,-0.3071,2027-01-28
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,MU,put ideas,Breaking down,798.4400,-9.3741,-4.5667,2026-12-23
+2026-11-12,2026-11-12,Risk-on,0,stock,XLC,Lagging,,GOOGL,put ideas,Breaking down,298.7000,-9.1319,-1.6027,2027-02-03
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,PANW,held back,Breaking down,322.6600,-7.5928,-7.7622,2026-11-18
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,AMAT,held back,Breaking down,380.9500,-16.3681,-2.9436,2026-11-12
+2026-11-12,2026-11-12,Risk-on,0,stock,XLK,Lagging,,NVDA,held back,Breaking down,166.1900,-17.6675,-15.4100,2026-11-17
