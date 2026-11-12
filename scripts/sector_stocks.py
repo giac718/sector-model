@@ -162,7 +162,7 @@ def setup_tag(rel_return: float, dist_fast: float, dist_slow: float, fast_above_
         return "Event mover"
     if dist_slow < 0:
         return "Breaking down"
-    if dist_slow > EXTENDED_DISTANCE:
+    if dist_slow > EXTENDED_DISTANCE and fast_above_slow:
         return "Extended"
     if dist_slow > 0 and fast_above_slow and abs(dist_fast) <= PULLBACK_DISTANCE:
         return "Pullback"
@@ -194,6 +194,7 @@ def analyse(holdings: pd.DataFrame, prices: pd.DataFrame, sector: str):
         fast_above_slow = bool(fast > slow) if has_slow else None
         rows.append({
             "Ticker": holding.Ticker,
+            "Close": price,
             "Weight": holding.Weight,
             "RelReturn3m": rel_return,
             "AboveEMA20": bool(price > fast) if has_fast else None,
@@ -307,6 +308,7 @@ def print_table(table: pd.DataFrame) -> None:
             na_rep="n/a",
             formatters={
                 "Weight %": "{:.1f}".format,
+                "Close": "{:.2f}".format,
                 "Rel 3m %": signed,
                 "vs EMA20 %": signed,
                 "vs EMA50 %": signed,

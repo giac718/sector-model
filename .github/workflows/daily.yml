@@ -7,10 +7,8 @@ on:
     - cron: "30 22 * * 1-5"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# No permissions by default; each job below asks only for what it needs.
+permissions: {}
 
 # Never run two deployments at once; let a running one finish.
 concurrency:
@@ -20,6 +18,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Write access to repository contents, only to push log/signals.csv.
+    permissions:
+      contents: write
     timeout-minutes: 20
     # Every step stops the job on the first failing command, so a failed
     # script means nothing is uploaded and the published site stays as it was.
@@ -82,6 +83,23 @@ jobs:
       - name: Check the pages to publish exist
         run: test -s output/index.html && test -s output/dashboard.html
 
+      - name: Log signals
+        run: python scripts/log_signals.py
+
+      - name: Commit the signals log
+        # Only log/signals.csv is staged, so no other generated file is committed.
+        run: |
+          git add log/signals.csv
+          if git diff --cached --quiet; then
+            echo "log/signals.csv is unchanged; nothing to commit."
+            exit 0
+          fi
+          price_date=$(python -c "import json; print(json.load(open('output/sector_status_today.json'))['date'])")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "log: signals for $price_date"
+          git push
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
@@ -90,6 +108,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -252,104 +252,159 @@ def load_stocks(sector: str) -> pd.DataFrame:
     return stocks
 
 
-def setups_section(drilled: list[dict]) -> str:
-    """Trade idea lists built from the setup tags of the scanned sectors."""
+# The three setup lists. Long-side lists keep relative return above 0,
+# strongest first; put-side lists keep it below 0, weakest first.
+SETUP_LISTS = [
+    {
+        "title": "Long ideas",
+        "note": "Pullback stocks in Leading sectors, beating their sector over 3 months.",
+        "label": "Leading",
+        "setups": ["Pullback"],
+        "long_side": True,
+        "limit": None,
+        "below_fast_ema": False,
+        "hold_for_earnings": True,
+    },
+    {
+        "title": "Wait for pullback",
+        "note": (
+            "Extended or Trending stocks in Leading sectors, beating their sector "
+            f"over 3 months. The {WAIT_LIST_LIMIT} strongest."
+        ),
+        "label": "Leading",
+        "setups": ["Extended", "Trending"],
+        "long_side": True,
+        "limit": WAIT_LIST_LIMIT,
+        "below_fast_ema": False,
+        "hold_for_earnings": False,
+    },
+    {
+        "title": "Put ideas",
+        "note": (
+            "Breaking down stocks in Lagging sectors, trailing their sector over "
+            f"3 months and below the 20 EMA. The {PUT_LIST_LIMIT} weakest."
+        ),
+        "label": "Lagging",
+        "setups": ["Breaking down"],
+        "long_side": False,
+        "limit": PUT_LIST_LIMIT,
+        "below_fast_ema": True,
+        "hold_for_earnings": True,
+    },
+]
+
+
+def scanned_stocks(drilled: list[dict]) -> pd.DataFrame:
+    """Stock tables of the scanned sectors, with each stock's sector and its label."""
     frames = []
     for entry in drilled:
         stocks = load_stocks(entry["sector"])
         stocks["Sector"] = entry["sector"]
         stocks["SectorLabel"] = entry["label"]
         frames.append(stocks)
-    stocks = pd.concat(frames) if frames else pd.DataFrame(
+    if frames:
+        return pd.concat(frames)
+    return pd.DataFrame(
         columns=[
             "Ticker", "Sector", "SectorLabel", "RelReturn3m", "DistEMA20", "Setup",
             "next_earnings",
         ]
     )
 
-    def idea_list(
-        title: str,
-        note: str,
-        label: str,
-        setups: list[str],
-        long_side: bool,
-        limit: int | None = None,
-        below_fast_ema: bool = False,
-        hold_for_earnings: bool = False,
-    ) -> str:
-        """One list. Long-side lists keep relative return above 0, strongest
-        first; put-side lists keep it below 0, weakest first."""
-        picks = stocks[(stocks["SectorLabel"] == label) & stocks["Setup"].isin(setups)]
-        dropped = []  # reasons, with counts, for the line under the list
 
-        keep = picks["RelReturn3m"] > 0 if long_side else picks["RelReturn3m"] < 0
+def select_setups(stocks: pd.DataFrame, spec: dict) -> dict:
+    """Apply one list's rules. Returns the spec plus its picks, the names held
+    back for earnings, and the reasons (with counts) other names were dropped."""
+    long_side = spec["long_side"]
+    picks = stocks[
+        (stocks["SectorLabel"] == spec["label"]) & stocks["Setup"].isin(spec["setups"])
+    ]
+    dropped = []
+
+    keep = picks["RelReturn3m"] > 0 if long_side else picks["RelReturn3m"] < 0
+    if (~keep).any():
+        side = "at or below" if long_side else "at or above"
+        dropped.append(f"{(~keep).sum()} with relative 3-month return {side} 0")
+    picks = picks[keep]
+
+    if spec["below_fast_ema"]:
+        keep = picks["DistEMA20"] < 0
         if (~keep).any():
-            side = "at or below" if long_side else "at or above"
-            dropped.append(f"{(~keep).sum()} with relative 3-month return {side} 0")
+            dropped.append(f"{(~keep).sum()} with the close at or above the 20 EMA")
         picks = picks[keep]
 
-        if below_fast_ema:
-            keep = picks["DistEMA20"] < 0
-            if (~keep).any():
-                dropped.append(f"{(~keep).sum()} with the close at or above the 20 EMA")
-            picks = picks[keep]
+    # One share class per company: drop the second class when both are here.
+    present = set(picks["Ticker"])
+    duplicates = [
+        t for t in picks["Ticker"]
+        if t in DUPLICATE_SHARE_CLASSES and DUPLICATE_SHARE_CLASSES[t] in present
+    ]
+    if duplicates:
+        dropped.append(f"{len(duplicates)} second share class ({', '.join(duplicates)})")
+        picks = picks[~picks["Ticker"].isin(duplicates)]
 
-        # One share class per company: drop the second class when both are here.
-        present = set(picks["Ticker"])
-        duplicates = [
-            t for t in picks["Ticker"]
-            if t in DUPLICATE_SHARE_CLASSES and DUPLICATE_SHARE_CLASSES[t] in present
-        ]
-        if duplicates:
-            dropped.append(
-                f"{len(duplicates)} second share class ({', '.join(duplicates)})"
-            )
-            picks = picks[~picks["Ticker"].isin(duplicates)]
+    held_back = picks.iloc[0:0]
+    if spec["hold_for_earnings"]:
+        days = picks["next_earnings"].map(days_to_earnings)
+        close = days.between(0, EARNINGS_HOLD_DAYS)
+        held_back, picks = picks[close], picks[~close]
 
-        held_back = picks.iloc[0:0]
-        if hold_for_earnings:
-            days = picks["next_earnings"].map(days_to_earnings)
-            close = days.between(0, EARNINGS_HOLD_DAYS)
-            held_back, picks = picks[close], picks[~close]
+    picks = picks.sort_values("RelReturn3m", ascending=not long_side)
+    limit = spec["limit"]
+    if limit is not None and len(picks) > limit:
+        which = "strongest" if long_side else "weakest"
+        dropped.append(f"{len(picks) - limit} beyond the {limit} {which}")
+        picks = picks.head(limit)
 
-        picks = picks.sort_values("RelReturn3m", ascending=not long_side)
-        if limit is not None and len(picks) > limit:
-            which = "strongest" if long_side else "weakest"
-            dropped.append(f"{len(picks) - limit} beyond the {limit} {which}")
-            picks = picks.head(limit)
+    return {**spec, "picks": picks, "held_back": held_back, "dropped": dropped}
 
-        filtered = (
-            f'<p class="note">Filtered out: {escape("; ".join(dropped))}.</p>'
-            if dropped
-            else '<p class="note">Nothing filtered out.</p>'
+
+def setup_lists(drilled: list[dict]) -> list[dict]:
+    """The three setup lists for today, as data. Also used by log_signals.py."""
+    stocks = scanned_stocks(drilled)
+    return [select_setups(stocks, spec) for spec in SETUP_LISTS]
+
+
+def setup_list_html(result: dict) -> str:
+    picks, held_back, dropped = result["picks"], result["held_back"], result["dropped"]
+    filtered = (
+        f'<p class="note">Filtered out: {escape("; ".join(dropped))}.</p>'
+        if dropped
+        else '<p class="note">Nothing filtered out.</p>'
+    )
+    if not held_back.empty:
+        names = ", ".join(
+            f"{escape(str(r.Ticker))} ({date.fromisoformat(r.next_earnings):%b} "
+            f"{date.fromisoformat(r.next_earnings).day})"
+            for r in held_back.itertuples(index=False)
         )
-        if not held_back.empty:
-            names = ", ".join(
-                f"{escape(str(r.Ticker))} ({date.fromisoformat(r.next_earnings):%b} "
-                f"{date.fromisoformat(r.next_earnings).day})"
-                for r in held_back.itertuples(index=False)
-            )
-            filtered = f"<p>Held back for earnings: {names}</p>\n" + filtered
-        heading = f"<h3>{escape(title)} ({len(picks)})</h3>\n<p class=\"note\">{escape(note)}</p>\n"
-        if picks.empty:
-            return heading + "<p>None today</p>\n" + filtered
-        headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings"]
-        rows = [
-            [
-                escape(str(r.Ticker)),
-                escape(r.Sector),
-                signed(r.RelReturn3m),
-                "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
-                earnings_cell(r.next_earnings),
-            ]
-            for r in picks.itertuples(index=False)
+        filtered = f"<p>Held back for earnings: {names}</p>\n" + filtered
+    heading = (
+        f"<h3>{escape(result['title'])} ({len(picks)})</h3>\n"
+        f"<p class=\"note\">{escape(result['note'])}</p>\n"
+    )
+    if picks.empty:
+        return heading + "<p>None today</p>\n" + filtered
+    headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings"]
+    rows = [
+        [
+            escape(str(r.Ticker)),
+            escape(r.Sector),
+            signed(r.RelReturn3m),
+            "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
+            earnings_cell(r.next_earnings),
         ]
-        if len(setups) > 1:
-            headers.insert(4, "Setup")
-            for row, r in zip(rows, picks.itertuples(index=False)):
-                row.insert(4, escape(r.Setup))
-        return heading + html_table(headers, rows) + "\n" + filtered
+        for r in picks.itertuples(index=False)
+    ]
+    if len(result["setups"]) > 1:
+        headers.insert(4, "Setup")
+        for row, r in zip(rows, picks.itertuples(index=False)):
+            row.insert(4, escape(r.Setup))
+    return heading + html_table(headers, rows) + "\n" + filtered
 
+
+def setups_section(drilled: list[dict]) -> str:
+    """Trade idea lists built from the setup tags of the scanned sectors."""
     scanned = ", ".join(f"{e['sector']} ({e['label']})" for e in drilled) or "none"
     return (
         '<section class="setups">\n'
@@ -359,26 +414,7 @@ def setups_section(drilled: list[dict]) -> str:
         "vs 20 EMA is the close's distance from its 20-day EMA. Earnings is the next "
         f"report date and how many days away it is, highlighted within "
         f"{EARNINGS_SOON_DAYS} days.</p>\n"
-        + idea_list(
-            "Long ideas",
-            "Pullback stocks in Leading sectors, beating their sector over 3 months.",
-            "Leading", ["Pullback"], long_side=True, hold_for_earnings=True,
-        )
-        + "\n"
-        + idea_list(
-            "Wait for pullback",
-            f"Extended or Trending stocks in Leading sectors, beating their sector "
-            f"over 3 months. The {WAIT_LIST_LIMIT} strongest.",
-            "Leading", ["Extended", "Trending"], long_side=True, limit=WAIT_LIST_LIMIT,
-        )
-        + "\n"
-        + idea_list(
-            "Put ideas",
-            f"Breaking down stocks in Lagging sectors, trailing their sector over "
-            f"3 months and below the 20 EMA. The {PUT_LIST_LIMIT} weakest.",
-            "Lagging", ["Breaking down"], long_side=False, limit=PUT_LIST_LIMIT,
-            below_fast_ema=True, hold_for_earnings=True,
-        )
+        + "\n".join(setup_list_html(result) for result in setup_lists(drilled))
         + "\n</section>"
     )
 
