@@ -5,8 +5,9 @@ Saves a flat table (Date + one column per ticker) to data/prices.csv.
 
 import sys
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, time as dt_time, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import yfinance as yf
@@ -21,6 +22,8 @@ TICKERS = [
 START = "2018-01-01"
 MAX_ATTEMPTS = 3
 RETRY_WAIT_SECONDS = 5
+MARKET_TIMEZONE = ZoneInfo("America/New_York")
+CLOSE_CUTOFF = dt_time(16, 15)  # before this (US Eastern), today's bar isn't final
 
 
 def download_prices() -> pd.DataFrame:
@@ -65,9 +68,23 @@ def flatten(closes: pd.DataFrame) -> pd.DataFrame:
     return table.sort_index().reset_index()
 
 
+def drop_unfinished_day(prices: pd.DataFrame) -> pd.DataFrame:
+    """Drop today's row if the US market hasn't closed yet, keeping completed closes only."""
+    now = datetime.now(MARKET_TIMEZONE)
+    if prices.empty or now.time() >= CLOSE_CUTOFF:
+        return prices
+    if prices["Date"].iloc[-1].date() != now.date():
+        return prices
+    print(
+        f"Note: dropped today's row ({now.date()}); it is {now:%H:%M} US Eastern, "
+        f"before the {CLOSE_CUTOFF:%H:%M} cutoff, so today's close isn't final."
+    )
+    return prices.iloc[:-1]
+
+
 def main() -> int:
     try:
-        prices = flatten(download_prices())
+        prices = drop_unfinished_day(flatten(download_prices()))
     except RuntimeError as exc:
         print(exc, file=sys.stderr)
         return 1
