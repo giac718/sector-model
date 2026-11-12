@@ -1,0 +1,94 @@
+name: Daily sector rotation run
+
+on:
+  schedule:
+    # Monday to Friday at 22:30 UTC: 5:30pm Eastern in winter, 6:30pm in summer,
+    # so always after the 4:15pm Eastern cutoff the scripts use for a completed close.
+    - cron: "30 22 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deployments at once; let a running one finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Every step stops the job on the first failing command, so a failed
+    # script means nothing is uploaded and the published site stays as it was.
+    defaults:
+      run:
+        shell: bash -euo pipefail {0}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Remove previously generated results
+        # The repo holds an old copy of some outputs; publish only what this run builds.
+        run: rm -f output/*.csv output/*.html
+
+      - name: Fetch prices
+        run: python scripts/fetch_prices.py
+
+      - name: Fetch regime data
+        run: python scripts/fetch_regime.py
+
+      - name: Rank sectors
+        run: python scripts/rank_sectors.py
+
+      - name: Build rank history
+        run: python scripts/rank_history.py
+
+      - name: Build dashboard
+        run: python scripts/build_dashboard.py
+
+      - name: Rank stocks in the top 3 sectors
+        run: |
+          sectors=$(python -c "import pandas as pd; print(' '.join(pd.read_csv('output/ranks_today.csv').sort_values('Rank')['Sector'].head(3)))")
+          if [ "$(echo "$sectors" | wc -w)" -ne 3 ]; then
+            echo "::error::Expected 3 top sectors in output/ranks_today.csv, got: '$sectors'"
+            exit 1
+          fi
+          for sector in $sectors; do
+            echo "::group::sector_stocks.py $sector"
+            python scripts/sector_stocks.py "$sector"
+            echo "::endgroup::"
+          done
+
+      - name: Build site
+        run: python scripts/build_site.py
+
+      - name: Check the pages to publish exist
+        run: test -s output/index.html && test -s output/dashboard.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: output
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

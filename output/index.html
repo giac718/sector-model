@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sector rotation</title>
+<style>
+:root { color-scheme: light dark; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.45;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+h2 { font-size: 1.2rem; margin-top: 2rem; }
+.meta, .note { color: GrayText; font-size: 0.9rem; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { padding: 0.35rem 0.3rem; text-align: right; white-space: nowrap; }
+th:nth-child(-n+2), td:nth-child(-n+2), td.name, th.name { text-align: left; }
+th { border-bottom: 2px solid GrayText; }
+td { border-bottom: 1px solid color-mix(in srgb, GrayText 30%, transparent); }
+td.name { white-space: normal; }
+.button {
+  display: inline-block;
+  margin: 0.5rem 0;
+  padding: 0.6rem 1rem;
+  border: 1px solid GrayText;
+  border-radius: 0.4rem;
+  text-decoration: none;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+<h1>Sector rotation</h1>
+<p class="meta">Run date: Thursday, November 12, 2026 (13:54 US Eastern)<br>Prices through the 2026-11-11 close</p>
+<p><a class="button" href="dashboard.html">Open the dashboard</a></p>
+<h2>Sector ranking</h2>
+<p class="note">Return minus SPY's return over 1, 3 and 6 months, in percentage points. Score is the average of the three.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>ETF</th><th class="name">Sector</th><th>1m</th><th>3m</th><th>6m</th><th>Score</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>XLV</td><td class="name">Health Care</td><td>+13.7</td><td>+14.7</td><td>+27.0</td><td>+18.47</td></tr>
+<tr><td>2</td><td>XLP</td><td class="name">Consumer Staples</td><td>+11.0</td><td>+9.1</td><td>+6.5</td><td>+8.87</td></tr>
+<tr><td>3</td><td>XLF</td><td class="name">Financials</td><td>+9.3</td><td>+3.1</td><td>+12.9</td><td>+8.43</td></tr>
+<tr><td>4</td><td>XLY</td><td class="name">Consumer Discretionary</td><td>+10.0</td><td>+4.4</td><td>-0.5</td><td>+4.64</td></tr>
+<tr><td>5</td><td>XLB</td><td class="name">Materials</td><td>+9.0</td><td>+3.9</td><td>-0.2</td><td>+4.23</td></tr>
+<tr><td>6</td><td>XLE</td><td class="name">Energy</td><td>-3.4</td><td>+6.5</td><td>+8.5</td><td>+3.89</td></tr>
+<tr><td>7</td><td>XLRE</td><td class="name">Real Estate</td><td>+8.9</td><td>+1.7</td><td>-0.3</td><td>+3.47</td></tr>
+<tr><td>8</td><td>XLU</td><td class="name">Utilities</td><td>+7.0</td><td>+2.3</td><td>-3.4</td><td>+1.96</td></tr>
+<tr><td>9</td><td>XLI</td><td class="name">Industrials</td><td>+3.7</td><td>-5.6</td><td>-3.9</td><td>-1.95</td></tr>
+<tr><td>10</td><td>XLC</td><td class="name">Communication Services</td><td>-0.9</td><td>-1.1</td><td>-9.3</td><td>-3.79</td></tr>
+<tr><td>11</td><td>XLK</td><td class="name">Technology</td><td>-8.8</td><td>-6.4</td><td>-4.1</td><td>-6.43</td></tr>
+</tbody>
+</table></div>
+<h2>#1 XLV Health Care: top holdings</h2>
+<p class="note">Largest holdings, ranked by 3-month return minus XLV's return (percentage points). The last three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>MRNA</td><td>1.3</td><td>+278.1</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>2</td><td>MCK</td><td>1.8</td><td>+13.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>3</td><td>GILD</td><td>3.1</td><td>+10.9</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>4</td><td>HCA</td><td>1.1</td><td>+10.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>5</td><td>TMO</td><td>3.9</td><td>+7.9</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>6</td><td>REGN</td><td>1.4</td><td>+6.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>7</td><td>LLY</td><td>16.8</td><td>+6.4</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>8</td><td>ABBV</td><td>7.6</td><td>+5.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>9</td><td>DHR</td><td>2.1</td><td>+3.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>10</td><td>MDT</td><td>1.8</td><td>+0.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>11</td><td>COR</td><td>1.0</td><td>+0.4</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>12</td><td>AMGN</td><td>3.7</td><td>+0.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>13</td><td>ISRG</td><td>2.3</td><td>-0.6</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>14</td><td>PFE</td><td>2.4</td><td>-1.2</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>15</td><td>MRK</td><td>5.3</td><td>-3.4</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>16</td><td>CI</td><td>1.2</td><td>-3.6</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>17</td><td>ELV</td><td>1.4</td><td>-4.3</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>18</td><td>JNJ</td><td>9.9</td><td>-5.1</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>19</td><td>VRTX</td><td>2.0</td><td>-6.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>20</td><td>UNH</td><td>5.3</td><td>-11.1</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>21</td><td>ABT</td><td>2.8</td><td>-13.8</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>22</td><td>BMY</td><td>1.9</td><td>-14.3</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>23</td><td>CVS</td><td>1.7</td><td>-17.7</td><td>yes</td><td>no</td><td>no</td></tr>
+<tr><td>24</td><td>SYK</td><td>1.6</td><td>-18.9</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>25</td><td>BSX</td><td>1.0</td><td>-25.3</td><td>yes</td><td>yes</td><td>no</td></tr>
+</tbody>
+</table></div>
+<h2>#2 XLP Consumer Staples: top holdings</h2>
+<p class="note">Largest holdings, ranked by 3-month return minus XLP's return (percentage points). The last three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>EL</td><td>1.6</td><td>+22.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>2</td><td>KDP</td><td>3.0</td><td>+16.8</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>3</td><td>KR</td><td>2.3</td><td>+15.2</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>4</td><td>MO</td><td>4.6</td><td>+13.8</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>5</td><td>PG</td><td>7.8</td><td>+10.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>6</td><td>COST</td><td>9.6</td><td>+6.2</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>7</td><td>DG</td><td>1.7</td><td>+6.1</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>8</td><td>KO</td><td>7.5</td><td>+5.2</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>9</td><td>CHD</td><td>1.5</td><td>+3.9</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>10</td><td>DLTR</td><td>1.6</td><td>+3.3</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>11</td><td>WMT</td><td>11.1</td><td>+1.8</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>12</td><td>STZ</td><td>1.2</td><td>-0.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>13</td><td>CL</td><td>4.5</td><td>-1.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>14</td><td>MDLZ</td><td>4.3</td><td>-1.1</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>15</td><td>TGT</td><td>4.1</td><td>-1.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>16</td><td>PM</td><td>6.1</td><td>-2.2</td><td>no</td><td>no</td><td>yes</td></tr>
+<tr><td>17</td><td>PEP</td><td>4.2</td><td>-3.6</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>18</td><td>KMB</td><td>3.8</td><td>-7.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>19</td><td>MNST</td><td>3.7</td><td>-9.8</td><td>no</td><td>no</td><td>yes</td></tr>
+<tr><td>20</td><td>KHC</td><td>1.2</td><td>-9.9</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>21</td><td>HSY</td><td>1.5</td><td>-11.5</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>22</td><td>SYY</td><td>2.1</td><td>-14.3</td><td>no</td><td>no</td><td>no</td></tr>
+<tr><td>23</td><td>ADM</td><td>2.0</td><td>-18.0</td><td>no</td><td>no</td><td>no</td></tr>
+<tr><td>24</td><td>CASY</td><td>1.5</td><td>-23.3</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>25</td><td>VYLR</td><td>1.5</td><td>n/a</td><td>yes</td><td>n/a</td><td>n/a</td></tr>
+</tbody>
+</table></div>
+<h2>#3 XLF Financials: top holdings</h2>
+<p class="note">Largest holdings, ranked by 3-month return minus XLF's return (percentage points). The last three columns show whether the price is above its 20-day and 50-day EMA, and whether the 20-day is above the 50-day.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Ticker</th><th>Wt %</th><th>Rel 3m</th><th>&gt;20d</th><th>&gt;50d</th><th>20&gt;50</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>CME</td><td>1.4</td><td>+17.8</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>2</td><td>ICE</td><td>1.2</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>3</td><td>MA</td><td>6.5</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>4</td><td>V</td><td>8.8</td><td>+15.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>5</td><td>BRK.B</td><td>13.3</td><td>+15.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>6</td><td>SPGI</td><td>1.7</td><td>+11.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>7</td><td>PGR</td><td>1.6</td><td>+10.9</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>8</td><td>MRSH</td><td>1.2</td><td>+9.6</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>9</td><td>TRV</td><td>1.0</td><td>+7.3</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>10</td><td>CB</td><td>1.6</td><td>+6.8</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>11</td><td>MCO</td><td>0.9</td><td>+4.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>12</td><td>BLK</td><td>2.1</td><td>+3.2</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>13</td><td>WFC</td><td>3.1</td><td>-3.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>14</td><td>JPM</td><td>11.1</td><td>-6.0</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>15</td><td>BNY</td><td>1.3</td><td>-6.5</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>16</td><td>AXP</td><td>2.1</td><td>-6.7</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>17</td><td>USB</td><td>1.1</td><td>-7.0</td><td>yes</td><td>yes</td><td>yes</td></tr>
+<tr><td>18</td><td>PNC</td><td>1.1</td><td>-9.2</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>19</td><td>C</td><td>2.5</td><td>-11.0</td><td>yes</td><td>no</td><td>no</td></tr>
+<tr><td>20</td><td>GS</td><td>3.3</td><td>-11.7</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>21</td><td>COF</td><td>1.5</td><td>-12.6</td><td>no</td><td>no</td><td>no</td></tr>
+<tr><td>22</td><td>MS</td><td>2.8</td><td>-13.2</td><td>yes</td><td>no</td><td>no</td></tr>
+<tr><td>23</td><td>SCHW</td><td>1.8</td><td>-16.4</td><td>yes</td><td>no</td><td>no</td></tr>
+<tr><td>24</td><td>BX</td><td>1.1</td><td>-18.5</td><td>yes</td><td>yes</td><td>no</td></tr>
+<tr><td>25</td><td>BAC</td><td>4.0</td><td>-21.5</td><td>no</td><td>no</td><td>no</td></tr>
+</tbody>
+</table></div>
+</body>
+</html>

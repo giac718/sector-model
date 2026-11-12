@@ -22,3 +22,10 @@ python3 -m venv .venv
 ```bash
 .venv/bin/python scripts/fetch_prices.py
 ```
+
+## Daily run
+
+`.github/workflows/daily.yml` runs every script Monday to Friday at 22:30 UTC
+(and on demand from the Actions tab), then publishes the `output/` folder to
+GitHub Pages. `scripts/build_site.py` builds the landing page, `output/index.html`.
+Generated files are not committed back to the repository.
