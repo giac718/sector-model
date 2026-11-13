@@ -1,10 +1,14 @@
-"""Build the landing page for the published site: output/index.html.
+"""Build the published site: one mobile-first page, output/index.html.
 
-Shows the run date, the market environment, what changed since the previous
-logged day, sector status, today's setups with trade plans, a link to the
-dashboard, collapsible stock tables for the scanned sectors (the strongest
-Leading and weakest Lagging ones), and the sector ranking. Reads the
-files the other scripts write to output/, so run those first.
+Five tabs under a sticky tab bar, each with its own URL hash:
+
+  Today    environment card, what changed, sector status chips, setup counts
+  Setups   the three setup lists with trade plans
+  Sectors  the weekly rank heatmap          (charts from build_dashboard.py)
+  Macro    the four gauge charts            (charts from build_dashboard.py)
+  Stocks   collapsible stock tables for the scanned sectors, sector ranking
+
+Reads the files the other scripts write to output/, so run those first.
 """
 
 import argparse
@@ -17,6 +21,8 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
+from build_dashboard import chart_parts
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = PROJECT_ROOT / "output"
 RANKS_PATH = OUTPUT_DIR / "ranks_today.csv"
@@ -24,7 +30,6 @@ ENVIRONMENT_PATH = OUTPUT_DIR / "environment_today.json"
 STATUS_PATH = OUTPUT_DIR / "sector_status_today.json"
 LOG_PATH = PROJECT_ROOT / "log" / "signals.csv"
 PRICES_PATH = PROJECT_ROOT / "data" / "prices.csv"
-DASHBOARD_NAME = "dashboard.html"
 INDEX_PATH = OUTPUT_DIR / "index.html"
 
 LEADING_SECTORS = 3      # strongest Leading sectors to scan for stocks
@@ -41,6 +46,15 @@ STOP_ATRS = 0.5          # stop sits this many ATRs beyond the EMA
 # Lists whose day-to-day membership is reported in the "What changed" box
 TRACKED_LISTS = ["Long ideas", "Put ideas"]
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
+
+# Tab id (also its URL hash) -> title, in display order. The first one opens by default.
+TABS = {
+    "today": "Today",
+    "setups": "Setups",
+    "sectors": "Sectors",
+    "macro": "Macro",
+    "stocks": "Stocks",
+}
 
 SECTOR_NAMES = {
     "XLK": "Technology",
@@ -66,16 +80,53 @@ STATUS_GUIDANCE = {
 
 STYLE = """
 :root { color-scheme: light dark; }
+* { box-sizing: border-box; }
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.45;
-  max-width: 46rem;
-  margin: 0 auto;
-  padding: 1rem;
+  margin: 0;
 }
-h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-h2 { font-size: 1.2rem; margin-top: 2rem; }
-.meta, .note { color: GrayText; font-size: 0.9rem; }
+.page { max-width: 46rem; margin: 0 auto; padding: 0 1rem 2.5rem; }
+header.top { padding: 0.7rem 0 0.4rem; }
+h1 { font-size: 1.2rem; margin: 0; }
+h2 { font-size: 1.1rem; margin: 1.25rem 0 0.4rem; }
+h3 { font-size: 1rem; margin: 1rem 0 0; }
+.meta, .note { color: GrayText; font-size: 0.85rem; }
+.meta { margin: 0.1rem 0 0; }
+nav.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  margin: 0 -1rem;
+  padding: 0 0.5rem;
+  background: Canvas;
+  border-bottom: 1px solid GrayText;
+}
+nav.tabs a {
+  flex: 1;
+  padding: 0.75rem 0 0.6rem;
+  border-bottom: 3px solid transparent;
+  color: GrayText;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+nav.tabs a[aria-current="page"] { color: CanvasText; border-bottom-color: CanvasText; }
+.panel { padding-top: 1rem; }
+.panel[hidden] { display: none; }
+.panel > h2:first-child { margin-top: 0; }
+.card {
+  border: 1px solid GrayText;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.9rem;
+}
+.card h2 { margin: 0 0 0.4rem; }
+.card p { margin: 0.35rem 0 0; }
+summary { cursor: pointer; padding: 0.5rem 0; font-weight: 600; }
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 th, td { padding: 0.35rem 0.3rem; text-align: right; white-space: nowrap; }
@@ -83,29 +134,23 @@ th:nth-child(-n+2), td:nth-child(-n+2), td.name, th.name { text-align: left; }
 th { border-bottom: 2px solid GrayText; }
 td { border-bottom: 1px solid color-mix(in srgb, GrayText 30%, transparent); }
 td.name { white-space: normal; }
-.env {
-  border: 1px solid GrayText;
-  border-left: 0.5rem solid var(--env-color);
-  border-radius: 0.4rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-}
+.env { border-left: 0.5rem solid var(--env-color); }
 .env-risk-on { --env-color: #1a7f37; --env-text: #ffffff; }
 .env-caution { --env-color: #f0a500; --env-text: #1a1a1a; }
 .env-risk-off { --env-color: #c02b2b; --env-text: #ffffff; }
-.env-heading { margin: 0 0 0.4rem; font-size: 0.9rem; color: GrayText; }
+.env .env-heading { margin: 0 0 0.4rem; font-size: 0.85rem; color: GrayText; }
 .env-label {
   display: inline-block;
-  padding: 0.15rem 0.7rem;
+  padding: 0.1rem 0.7rem;
   border-radius: 0.3rem;
   background: var(--env-color);
   color: var(--env-text);
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
 }
 .env-band { margin-left: 0.5rem; white-space: nowrap; }
-.env-posture { margin: 0.6rem 0; font-weight: 600; }
-.env ul { list-style: none; margin: 0.6rem 0 0.4rem; padding: 0; }
+.env .env-posture { margin: 0.5rem 0 0.2rem; font-weight: 600; }
+.env ul { list-style: none; margin: 0.2rem 0 0.4rem; padding: 0; }
 .env li { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.2rem 0; }
 .env .state {
   flex: none;
@@ -117,24 +162,31 @@ td.name { white-space: normal; }
   font-weight: 700;
 }
 .env .state.on { background: #c02b2b; border-color: #c02b2b; color: #ffffff; }
-.env .note { margin: 0.4rem 0 0; }
-.status h3, .setups h3 { font-size: 1.05rem; margin: 1.2rem 0 0; }
-.setups h3 + .note { margin: 0.1rem 0 0.3rem; }
-.setups .table-wrap + .note { margin: 0.3rem 0 0; }
-.changes {
-  border: 1px solid GrayText;
-  border-radius: 0.4rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-}
-.changes h2 { margin: 0 0 0.3rem; font-size: 1.1rem; }
 .changes ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
 .changes li { padding: 0.1rem 0; }
-.changes p { margin: 0.3rem 0 0; }
-details.stocks { border-top: 1px solid GrayText; }
-details.stocks:last-of-type { border-bottom: 1px solid GrayText; }
-details.stocks summary { padding: 0.7rem 0; font-size: 1.05rem; font-weight: 600; cursor: pointer; }
-details.stocks .table-wrap { margin-bottom: 1rem; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+.chips .chip-label { flex: none; width: 5.2rem; font-weight: 600; font-size: 0.9rem; }
+.chip {
+  padding: 0.05rem 0.5rem;
+  border: 2px solid var(--chip);
+  border-radius: 1rem;
+  background: var(--chip);
+  color: var(--chip-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.chip.borderline { background: transparent; color: CanvasText; }
+.chip.leading { --chip: #1a7f37; --chip-text: #ffffff; }
+.chip.improving { --chip: #0b7285; --chip-text: #ffffff; }
+.chip.weakening { --chip: #f0a500; --chip-text: #1a1a1a; }
+.chip.lagging { --chip: #c02b2b; --chip-text: #ffffff; }
+.status .guidance { margin: 0.1rem 0 0.3rem; font-weight: 600; }
+.setup-count { font-weight: 600; }
+details.fold { border-top: 1px solid GrayText; }
+details.fold:last-of-type { border-bottom: 1px solid GrayText; }
+details.fold > summary { padding: 0.7rem 0; font-size: 1.05rem; }
+details.fold > :last-child { margin-bottom: 0.9rem; }
+details.fold p { margin: 0.3rem 0; }
 .earn-soon {
   padding: 0 0.3rem;
   border-radius: 0.3rem;
@@ -151,16 +203,37 @@ details.stocks .table-wrap { margin-bottom: 1rem; }
   font-size: 0.75rem;
   white-space: nowrap;
 }
-.status .guidance { margin: 0.1rem 0 0.3rem; font-weight: 600; }
-.button {
-  display: inline-block;
-  margin: 0.5rem 0;
-  padding: 0.6rem 1rem;
-  border: 1px solid GrayText;
-  border-radius: 0.4rem;
-  text-decoration: none;
-  font-weight: 600;
+@media (min-width: 1000px) {
+  .page { max-width: 64rem; }
+  .panel.narrow { max-width: 46rem; }
 }
+"""
+
+# Runs in the browser: shows one tab at a time, following the URL hash so
+# tabs can be bookmarked and the back button moves between them.
+TAB_SCRIPT = """
+(function () {
+  var tabs = __TABS__;
+  function current() {
+    var name = location.hash.replace('#', '');
+    return tabs.indexOf(name) >= 0 ? name : tabs[0];
+  }
+  function show() {
+    var name = current();
+    tabs.forEach(function (tab) {
+      document.getElementById('panel-' + tab).hidden = tab !== name;
+      var link = document.querySelector('nav.tabs a[href="#' + tab + '"]');
+      if (tab === name) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    window.scrollTo(0, 0);
+    // Charts are drawn or resized when their tab becomes visible.
+    if (window.dashboardCharts) window.dashboardCharts.open(name);
+  }
+  window.currentTab = current;
+  window.addEventListener('hashchange', show);
+  show();
+})();
 """
 
 
@@ -408,7 +481,8 @@ def setup_lists(drilled: list[dict]) -> list[dict]:
     return [select_setups(stocks, spec) for spec in SETUP_LISTS]
 
 
-def setup_list_html(result: dict) -> str:
+def setup_list_html(result: dict, open_by_default: bool) -> str:
+    """One setup list as a collapsible block."""
     picks, held_back, dropped = result["picks"], result["held_back"], result["dropped"]
     filtered = (
         f'<p class="note">Filtered out: {escape("; ".join(dropped))}.</p>'
@@ -422,50 +496,68 @@ def setup_list_html(result: dict) -> str:
             for r in held_back.itertuples(index=False)
         )
         filtered = f"<p>Held back for earnings: {names}</p>\n" + filtered
-    heading = (
-        f"<h3>{escape(result['title'])} ({len(picks)})</h3>\n"
-        f"<p class=\"note\">{escape(result['note'])}</p>\n"
-    )
+
     if picks.empty:
-        return heading + "<p>None today</p>\n" + filtered
-    headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings", "Stop", "Risk %", "ATRs"]
-    rows = [
-        [
-            escape(str(r.Ticker)),
-            escape(r.Sector),
-            signed(r.RelReturn3m),
-            "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
-            earnings_cell(r.next_earnings),
-            "n/a" if pd.isna(r.Stop) else f"{r.Stop:.2f}",
-            "n/a" if pd.isna(r.RiskPct) else f"{r.RiskPct:.1f}%",
-            "n/a" if pd.isna(r.RiskATR) else f"{r.RiskATR:.1f}",
+        body = "<p>None today</p>"
+    else:
+        headers = ["Ticker", "Sector", "Rel 3m", "vs 20 EMA", "Earnings", "Stop", "Risk %", "ATRs"]
+        rows = [
+            [
+                escape(str(r.Ticker)),
+                escape(r.Sector),
+                signed(r.RelReturn3m),
+                "n/a" if pd.isna(r.DistEMA20) else f"{r.DistEMA20:+.1f}%",
+                earnings_cell(r.next_earnings),
+                "n/a" if pd.isna(r.Stop) else f"{r.Stop:.2f}",
+                "n/a" if pd.isna(r.RiskPct) else f"{r.RiskPct:.1f}%",
+                "n/a" if pd.isna(r.RiskATR) else f"{r.RiskATR:.1f}",
+            ]
+            for r in picks.itertuples(index=False)
         ]
-        for r in picks.itertuples(index=False)
-    ]
-    if len(result["setups"]) > 1:
-        headers.insert(4, "Setup")
-        for row, r in zip(rows, picks.itertuples(index=False)):
-            row.insert(4, escape(r.Setup))
-    return heading + html_table(headers, rows) + "\n" + filtered
+        if len(result["setups"]) > 1:
+            headers.insert(4, "Setup")
+            for row, r in zip(rows, picks.itertuples(index=False)):
+                row.insert(4, escape(r.Setup))
+        body = html_table(headers, rows)
+
+    return (
+        f'<details class="fold"{" open" if open_by_default else ""}>\n'
+        f"<summary>{escape(result['title'])} ({len(picks)})</summary>\n"
+        f"<p class=\"note\">{escape(result['note'])}</p>\n"
+        f"{body}\n{filtered}\n"
+        "</details>"
+    )
 
 
 def setups_section(drilled: list[dict], lists: list[dict]) -> str:
-    """Trade idea lists built from the setup tags of the scanned sectors."""
+    """Setups tab: the three lists, with only the first one open."""
     scanned = ", ".join(f"{e['sector']} ({e['label']})" for e in drilled) or "none"
     return (
-        '<section class="setups">\n'
-        "<h2>Setups today</h2>\n"
-        f'<p class="note">From the largest holdings of the scanned sectors: {escape(scanned)}. '
-        "Rel 3m is the 3-month return minus the sector ETF's return (percentage points); "
+        '<p class="note">From the largest holdings of the scanned sectors: '
+        f"{escape(scanned)}.</p>\n"
+        + "\n".join(setup_list_html(result, i == 0) for i, result in enumerate(lists))
+        + '\n<details class="fold">\n<summary>How to read the columns</summary>\n'
+        "<p>Rel 3m is the 3-month return minus the sector ETF's return (percentage points); "
         "vs 20 EMA is the close's distance from its 20-day EMA. Earnings is the next "
         f"report date and how many days away it is, highlighted within "
         f"{EARNINGS_SOON_DAYS} days. Stop is the 50-day EMA minus {STOP_ATRS} ATR for "
         f"longs and the 20-day EMA plus {STOP_ATRS} ATR for puts (14-day ATR). Risk % "
         "is the distance from the close to the stop, and ATRs is that same "
-        "distance in ATRs.</p>\n"
-        + "\n".join(setup_list_html(result) for result in lists)
-        + "\n</section>"
+        "distance in ATRs.</p>\n</details>"
     )
+
+
+def setup_count_line(lists: list[dict]) -> str:
+    """One line for the Today tab, linking to the Setups tab."""
+    counts = {result["title"]: len(result["picks"]) for result in lists}
+    held = sum(len(result["held_back"]) for result in lists)
+    longs, puts = counts.get("Long ideas", 0), counts.get("Put ideas", 0)
+    text = (
+        f"{longs} long idea{'' if longs == 1 else 's'} · "
+        f"{puts} put{'' if puts == 1 else 's'}"
+    )
+    extra = f" · {held} held back for earnings" if held else ""
+    return f'<p class="setup-count"><a href="#setups">{text}</a>{extra}</p>'
 
 
 def stocks_section(entry: dict) -> str:
@@ -487,7 +579,7 @@ def stocks_section(entry: dict) -> str:
     ]
     name = SECTOR_NAMES.get(sector, "")
     return (
-        '<details class="stocks">\n'
+        '<details class="fold">\n'
         f"<summary>{escape(sector)} {escape(name)} ({escape(entry['label'])}): "
         f"top {len(rows)} holdings</summary>\n"
         f'<p class="note">Largest holdings, ranked by 3-month return minus '
@@ -512,7 +604,7 @@ def changes_section(lists: list[dict]) -> str:
     earlier = sorted(set(log["price_date"][log["price_date"] < today])) if log is not None else []
     if not earlier:
         return (
-            '<section class="changes">\n<h2>What changed</h2>\n'
+            '<section class="card changes">\n<h2>What changed</h2>\n'
             "<p>First day of the log; changes start tomorrow.</p>\n</section>"
         )
     previous_date = earlier[-1]
@@ -562,11 +654,11 @@ def changes_section(lists: list[dict]) -> str:
             + "\n".join(f"<li>{item}</li>" for item in items)
             + "\n</ul>"
         )
-    return f'<section class="changes">\n<h2>What changed</h2>\n{body}\n</section>'
+    return f'<section class="card changes">\n<h2>What changed</h2>\n{body}\n</section>'
 
 
 def environment_section() -> str:
-    """The market environment box, from output/environment_today.json."""
+    """Environment card: label, volatility band, posture, warnings behind a tap."""
     if not ENVIRONMENT_PATH.exists():
         raise RuntimeError(
             f"{ENVIRONMENT_PATH} not found. Run scripts/environment.py first."
@@ -583,35 +675,49 @@ def environment_section() -> str:
         for name, day in env["series_as_of"].items()
     )
     return (
-        f'<section class="env {css_class}">\n'
+        f'<section class="card env {css_class}">\n'
         f'<p class="env-heading">Market environment, as of the {escape(env["date"])} close</p>\n'
         f'<p><span class="env-label">{escape(env["label"])}</span>'
         f'<span class="env-band">Volatility: {escape(env["volatility_band"])}</span></p>\n'
         f'<p class="env-posture">{escape(env["posture"])}</p>\n'
-        f'<ul aria-label="Warnings ({env["warnings_on"]} of {len(env["warnings"])} on)">\n'
-        + "\n".join(items)
-        + "\n</ul>\n"
-        f'<p class="note">{env["warnings_on"]} of {len(env["warnings"])} warnings on. '
-        f"Data as of: {as_of}.</p>\n"
+        "<details>\n"
+        f'<summary>{env["warnings_on"]} of {len(env["warnings"])} warnings</summary>\n'
+        "<ul>\n" + "\n".join(items) + "\n</ul>\n"
+        f'<p class="note">Data as of: {as_of}.</p>\n'
+        "</details>\n"
         "</section>"
     )
 
 
+def is_borderline(sector: dict) -> bool:
+    return (
+        abs(sector["rel_score"]) <= BORDERLINE_SCORE
+        or sector["days_in_label"] < BORDERLINE_DAYS
+    )
+
+
 def status_section() -> str:
-    """Sectors grouped by status label, from output/sector_status_today.json."""
+    """Sector status card: chips grouped by label, full tables behind "Details"."""
     status = load_status()
 
     def name_cell(s: dict) -> str:
         name = escape(SECTOR_NAMES.get(s["sector"], ""))
-        borderline = (
-            abs(s["rel_score"]) <= BORDERLINE_SCORE or s["days_in_label"] < BORDERLINE_DAYS
-        )
-        return name + (' <span class="tag">borderline</span>' if borderline else "")
+        return name + (' <span class="tag">borderline</span>' if is_borderline(s) else "")
 
-    groups = []
+    chip_rows, groups = [], []
     for label, guidance in STATUS_GUIDANCE.items():
         members = [s for s in status["sectors"] if s["label"] == label]
         members.sort(key=lambda s: s["rel_score"], reverse=True)
+
+        chips = "".join(
+            f'<span class="chip {label.lower()}{" borderline" if is_borderline(s) else ""}">'
+            f"{escape(s['sector'])}</span>"
+            for s in members
+        ) or '<span class="note">none</span>'
+        chip_rows.append(
+            f'<p class="chips"><span class="chip-label">{escape(label)}</span>{chips}</p>'
+        )
+
         heading = (
             f"<h3>{escape(label)} ({len(members)})</h3>\n"
             f'<p class="guidance">{escape(guidance)}</p>\n'
@@ -637,9 +743,13 @@ def status_section() -> str:
         )
 
     return (
-        '<section class="status">\n'
+        '<section class="card status">\n'
         "<h2>Sector status</h2>\n"
-        f'<p class="note">As of the {escape(status["date"])} close. Score is the average '
+        + "\n".join(chip_rows)
+        + '\n<p class="note">Outlined = borderline.</p>\n'
+        "<details>\n<summary>Details</summary>\n"
+        + "\n".join(groups)
+        + f'\n<p class="note">As of the {escape(status["date"])} close. Score is the average '
         "1, 3 and 6-month return relative to SPY. Rel is the score minus the average "
         "score of all sectors, and Change is Rel versus "
         f'{status["change_days"]} trading days earlier (all in percentage points). '
@@ -647,8 +757,8 @@ def status_section() -> str:
         "the sector has had its label. A sector is marked borderline when Rel is "
         f"within {BORDERLINE_SCORE} point of zero or it has held its label for fewer "
         f"than {BORDERLINE_DAYS} days.</p>\n"
-        + "\n".join(groups)
-        + "\n</section>"
+        "</details>\n"
+        "</section>"
     )
 
 
@@ -663,24 +773,42 @@ def prices_through() -> str | None:
 def build_page() -> str:
     if not RANKS_PATH.exists():
         raise RuntimeError(f"{RANKS_PATH} not found. Run scripts/rank_sectors.py first.")
-    if not (OUTPUT_DIR / DASHBOARD_NAME).exists():
-        raise RuntimeError(
-            f"{OUTPUT_DIR / DASHBOARD_NAME} not found. Run scripts/build_dashboard.py first."
-        )
 
     ranks = pd.read_csv(RANKS_PATH).sort_values("Rank")
     if ranks.empty:
         raise RuntimeError(f"{RANKS_PATH} has no rows.")
     drilled = drill_sectors(load_status())
     lists = setup_lists(drilled)
+    charts = chart_parts()
 
     run_time = datetime.now(MARKET_TIMEZONE)
-    meta = f"Run date: {run_time:%A, %B %-d, %Y} ({run_time:%H:%M} US Eastern)"
+    meta = f"Run {run_time:%a %b} {run_time.day}, {run_time:%H:%M} ET"
     through = prices_through()
     if through:
-        meta += f"<br>Prices through the {escape(through)} close"
+        meta = f"Prices through the {escape(through)} close · " + meta
 
     stock_tables = "\n".join(stocks_section(entry) for entry in drilled)
+    panels = {
+        "today": (
+            f"{environment_section()}\n{changes_section(lists)}\n{status_section()}\n"
+            f"{setup_count_line(lists)}"
+        ),
+        "setups": setups_section(drilled, lists),
+        "sectors": charts["sectors_html"],
+        "macro": charts["macro_html"],
+        "stocks": (
+            "<h2>Stock tables</h2>\n"
+            '<p class="note">Tap a sector to show its largest holdings.</p>\n'
+            f"{stock_tables}\n{ranking_section(ranks)}"
+        ),
+    }
+    chart_tabs = {"sectors", "macro"}
+    nav = "".join(f'<a href="#{tab}">{title}</a>' for tab, title in TABS.items())
+    sections = "\n".join(
+        f'<section id="panel-{tab}" class="panel{"" if tab in chart_tabs else " narrow"}">\n'
+        f"{panels[tab]}\n</section>"
+        for tab in TABS
+    )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -688,20 +816,20 @@ def build_page() -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sector rotation</title>
-<style>{STYLE}</style>
+<style>{STYLE}{charts["style"]}</style>
 </head>
 <body>
+<div class="page">
+<header class="top">
 <h1>Sector rotation</h1>
 <p class="meta">{meta}</p>
-{environment_section()}
-{changes_section(lists)}
-{status_section()}
-{setups_section(drilled, lists)}
-<p><a class="button" href="{DASHBOARD_NAME}">Open the dashboard</a></p>
-<h2>Stock tables</h2>
-<p class="note">Tap a sector to show its largest holdings.</p>
-{stock_tables}
-{ranking_section(ranks)}
+</header>
+<nav class="tabs" aria-label="Sections">{nav}</nav>
+{sections}
+</div>
+<script>{TAB_SCRIPT.replace("__TABS__", json.dumps(list(TABS)))}</script>
+<script src="{charts["plotly_src"]}"></script>
+<script>{charts["script"]}</script>
 </body>
 </html>
 """

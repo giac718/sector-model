@@ -62,7 +62,9 @@ jobs:
       - name: Build rank history
         run: python scripts/rank_history.py
 
-      - name: Build dashboard
+      - name: Build dashboard redirect
+        # dashboard.html now only redirects to index.html#macro; the charts
+        # themselves are built into index.html by the "Build site" step.
         run: python scripts/build_dashboard.py
 
       - name: Rank stocks in the top Leading and weakest Lagging sectors
@@ -80,8 +82,17 @@ jobs:
       - name: Build site
         run: python scripts/build_site.py
 
-      - name: Check the pages to publish exist
-        run: test -s output/index.html && test -s output/dashboard.html
+      - name: Check the pages to publish
+        # The one-page site must exist and contain every tab and the chart
+        # data; dashboard.html must redirect to it.
+        run: |
+          test -s output/index.html
+          for tab in today setups sectors macro stocks; do
+            grep -q "id=\"panel-$tab\"" output/index.html
+          done
+          grep -q 'id="chart-heat"' output/index.html
+          grep -q 'id="chart-vix"' output/index.html
+          grep -q 'index.html#macro' output/dashboard.html
 
       - name: Log signals
         run: python scripts/log_signals.py
