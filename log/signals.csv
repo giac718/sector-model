@@ -35,7 +35,7 @@ price_date,run_date,env_label,env_warnings,item,sector,sector_label,rel_score,ti
 2026-11-11,2026-11-12,Risk-on,0,stock,XLK,Lagging,,PANW,held back,Breaking down,334.4700,-7.0426,-5.1611,2026-11-18,,
 2026-11-11,2026-11-12,Risk-on,0,stock,XLK,Lagging,,NVDA,held back,Breaking down,173.7300,-14.3079,-12.9837,2026-11-17,,
 2026-11-12,2026-11-13,Risk-on,0,sector,XLV,Leading,13.8442,,,,,,,,,
-2026-11-12,2026-11-13,Risk-on,0,sector,XLF,Leading,4.4171,,,,,,,,,
+2026-11-12,2026-11-13,Risk-on,0,sector,XLF,Leading,4.4170,,,,,,,,,
 2026-11-12,2026-11-13,Risk-on,0,sector,XLP,Leading,4.2122,,,,,,,,,
 2026-11-12,2026-11-13,Risk-on,0,sector,XLY,Leading,1.2858,,,,,,,,,
 2026-11-12,2026-11-13,Risk-on,0,sector,XLE,Weakening,1.2132,,,,,,,,,
