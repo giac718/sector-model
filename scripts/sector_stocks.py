@@ -13,6 +13,7 @@ import argparse
 import io
 import json
 import sys
+import tempfile
 import time
 import urllib.request
 from datetime import date, datetime, time as dt_time, timedelta
@@ -104,12 +105,26 @@ def get_holdings(sector: str) -> tuple[pd.DataFrame, str]:
     return fallback_holdings(sector), f"fallback list ({FALLBACK_PATH.name})"
 
 
+def use_temporary_yfinance_cache() -> tempfile.TemporaryDirectory:
+    """Point yfinance's cache at a fresh temporary folder for this run.
+
+    Nothing is shared with other runs or processes, which avoids "database is
+    locked" errors from its SQLite cache. The folder is removed when the
+    returned object is cleaned up or the script exits.
+    """
+    folder = tempfile.TemporaryDirectory(prefix="yfinance-cache-", ignore_cleanup_errors=True)
+    yf.set_tz_cache_location(folder.name)
+    return folder
+
+
 def fetch_bars(tickers: list[str]) -> pd.DataFrame | None:
     """One download of adjusted Close, High and Low. Columns are (field, ticker)."""
     start = (date.today() - timedelta(days=HISTORY_DAYS)).isoformat()
     # yfinance's `end` is exclusive, so ask for tomorrow to include today.
     end = (date.today() + timedelta(days=1)).isoformat()
-    raw = yf.download(tickers, start=start, end=end, auto_adjust=True, progress=False)
+    raw = yf.download(
+        tickers, start=start, end=end, auto_adjust=True, progress=False, threads=False
+    )
     if raw is None or raw.empty:
         return None
     return raw[PRICE_FIELDS].dropna(how="all").sort_index()
@@ -416,6 +431,7 @@ def main() -> int:
     if sector not in SECTORS:
         parser.error(f"unknown sector '{sector}'. Choose one of: {', '.join(SECTORS)}")
 
+    cache = use_temporary_yfinance_cache()  # kept alive until the script ends
     try:
         holdings, source = get_holdings(sector)
         print(f"Holdings source: {source}")

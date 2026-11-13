@@ -4,6 +4,7 @@ Saves a flat table (Date + one column per ticker) to data/prices.csv.
 """
 
 import sys
+import tempfile
 import time
 from datetime import date, datetime, time as dt_time, timedelta
 from pathlib import Path
@@ -24,6 +25,18 @@ RETRY_WAITS = [30, 60, 120]  # seconds to wait before each retry
 MAX_STALE_DAYS = 5           # the latest price must be within this many calendar days
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
 CLOSE_CUTOFF = dt_time(16, 15)  # before this (US Eastern), today's bar isn't final
+
+
+def use_temporary_yfinance_cache() -> tempfile.TemporaryDirectory:
+    """Point yfinance's cache at a fresh temporary folder for this run.
+
+    Nothing is shared with other runs or processes, which avoids "database is
+    locked" errors from its SQLite cache. The folder is removed when the
+    returned object is cleaned up or the script exits.
+    """
+    folder = tempfile.TemporaryDirectory(prefix="yfinance-cache-", ignore_cleanup_errors=True)
+    yf.set_tz_cache_location(folder.name)
+    return folder
 
 
 def data_problem(closes: pd.DataFrame | None) -> str | None:
@@ -66,6 +79,7 @@ def download_prices() -> pd.DataFrame:
                 end=end,
                 auto_adjust=True,
                 progress=False,
+                threads=False,
             )
             closes = raw["Close"] if raw is not None and not raw.empty else None
             problem = data_problem(closes)
@@ -111,6 +125,7 @@ def drop_unfinished_day(prices: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> int:
+    cache = use_temporary_yfinance_cache()  # kept alive until the script ends
     try:
         prices = drop_unfinished_day(flatten(download_prices()))
     except RuntimeError as exc:
