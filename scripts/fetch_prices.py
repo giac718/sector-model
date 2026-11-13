@@ -20,19 +20,45 @@ TICKERS = [
     "XLP", "XLI", "XLB", "XLU", "XLRE", "XLC",
 ]
 START = "2018-01-01"
-MAX_ATTEMPTS = 3
-RETRY_WAIT_SECONDS = 5
+RETRY_WAITS = [30, 60, 120]  # seconds to wait before each retry
+MAX_STALE_DAYS = 5           # the latest price must be within this many calendar days
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
 CLOSE_CUTOFF = dt_time(16, 15)  # before this (US Eastern), today's bar isn't final
 
 
+def data_problem(closes: pd.DataFrame | None) -> str | None:
+    """Describe what is wrong with a download, or return None if it is usable.
+
+    Every ticker must have prices, and each one's latest price must be recent.
+    """
+    if closes is None or closes.empty:
+        return "download came back empty"
+    empty = [t for t in TICKERS if t not in closes.columns or closes[t].dropna().empty]
+    if empty:
+        return f"no data for {', '.join(empty)}"
+    today = datetime.now(MARKET_TIMEZONE).date()
+    stale = []
+    for ticker in TICKERS:
+        last = closes[ticker].dropna().index[-1].date()
+        if (today - last).days > MAX_STALE_DAYS:
+            stale.append(f"{ticker} (last {last})")
+    if stale:
+        return f"latest price is more than {MAX_STALE_DAYS} days old for {', '.join(stale)}"
+    return None
+
+
 def download_prices() -> pd.DataFrame:
-    """Download closes for all tickers, retrying on failure or empty result."""
+    """Download closes for all tickers.
+
+    Retries, with longer and longer waits, when the download fails, comes
+    back empty, is missing a ticker, or is stale. Raises if it never passes.
+    """
     # yfinance's `end` is exclusive, so ask for tomorrow to include today.
     end = (date.today() + timedelta(days=1)).isoformat()
-    last_error = "unknown error"
+    attempts = len(RETRY_WAITS) + 1
+    problem = "unknown error"
 
-    for attempt in range(1, MAX_ATTEMPTS + 1):
+    for attempt in range(1, attempts + 1):
         try:
             raw = yf.download(
                 TICKERS,
@@ -41,20 +67,22 @@ def download_prices() -> pd.DataFrame:
                 auto_adjust=True,
                 progress=False,
             )
-            if raw is not None and not raw.empty:
-                closes = raw["Close"]
-                if not closes.dropna(how="all").empty:
-                    return closes
-            last_error = "download came back empty"
+            closes = raw["Close"] if raw is not None and not raw.empty else None
+            problem = data_problem(closes)
+            if problem is None:
+                return closes
         except Exception as exc:  # yfinance raises a variety of error types
-            last_error = f"{type(exc).__name__}: {exc}"
+            problem = f"{type(exc).__name__}: {exc}"
 
-        print(f"Attempt {attempt}/{MAX_ATTEMPTS} failed: {last_error}")
-        if attempt < MAX_ATTEMPTS:
-            time.sleep(RETRY_WAIT_SECONDS)
+        print(f"Attempt {attempt}/{attempts} failed: {problem}")
+        if attempt < attempts:
+            wait = RETRY_WAITS[attempt - 1]
+            print(f"Waiting {wait} seconds before retrying.")
+            time.sleep(wait)
 
     raise RuntimeError(
-        f"Price download failed after {MAX_ATTEMPTS} attempts: {last_error}"
+        f"ERROR: price download failed after {attempts} attempts: {problem}. "
+        f"{OUTPUT_PATH.name} was not written."
     )
 
 
@@ -89,8 +117,12 @@ def main() -> int:
         print(exc, file=sys.stderr)
         return 1
 
+    # Write to a temporary file and swap it in, so a failure part-way through
+    # can never leave an empty or half-written prices.csv behind.
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    prices.to_csv(OUTPUT_PATH, index=False, date_format="%Y-%m-%d")
+    temporary = OUTPUT_PATH.with_suffix(".csv.tmp")
+    prices.to_csv(temporary, index=False, date_format="%Y-%m-%d")
+    temporary.replace(OUTPUT_PATH)
 
     pd.set_option("display.width", 200)
     pd.set_option("display.max_columns", None)

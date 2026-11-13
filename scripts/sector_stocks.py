@@ -50,8 +50,8 @@ EVENT_MOVER_RETURN = 50   # relative 3-month return above this, in % points
 EXTENDED_DISTANCE = 10    # % above the 50 EMA
 PULLBACK_DISTANCE = 2     # % either side of the 20 EMA
 
-MAX_ATTEMPTS = 3
-RETRY_WAIT_SECONDS = 5
+RETRY_WAITS = [30, 60, 120]  # seconds to wait before each retry
+MAX_STALE_DAYS = 5           # the ETF's latest price must be within this many calendar days
 TIMEOUT_SECONDS = 30
 
 EARNINGS_PAUSE_SECONDS = 0.4   # pause between earnings lookups, to avoid rate limits
@@ -104,33 +104,88 @@ def get_holdings(sector: str) -> tuple[pd.DataFrame, str]:
     return fallback_holdings(sector), f"fallback list ({FALLBACK_PATH.name})"
 
 
-def download_prices(tickers: list[str]) -> pd.DataFrame:
-    """Adjusted daily Close, High and Low for every ticker, retrying on failure
-    or an empty result. Columns are (field, ticker)."""
+def fetch_bars(tickers: list[str]) -> pd.DataFrame | None:
+    """One download of adjusted Close, High and Low. Columns are (field, ticker)."""
     start = (date.today() - timedelta(days=HISTORY_DAYS)).isoformat()
     # yfinance's `end` is exclusive, so ask for tomorrow to include today.
     end = (date.today() + timedelta(days=1)).isoformat()
-    last_error = "unknown error"
+    raw = yf.download(tickers, start=start, end=end, auto_adjust=True, progress=False)
+    if raw is None or raw.empty:
+        return None
+    return raw[PRICE_FIELDS].dropna(how="all").sort_index()
 
-    for attempt in range(1, MAX_ATTEMPTS + 1):
+
+def missing_tickers(bars: pd.DataFrame | None, tickers: list[str]) -> list[str]:
+    if bars is None:
+        return list(tickers)
+    closes = bars["Close"]
+    return [t for t in tickers if t not in closes.columns or closes[t].dropna().empty]
+
+
+def data_problem(bars: pd.DataFrame | None, sector: str) -> str | None:
+    """Describe a download that can't be used at all, or return None.
+
+    The download must not be empty, and the sector ETF must have recent prices.
+    """
+    if bars is None or bars.empty or bars["Close"].dropna(how="all").empty:
+        return "download came back empty"
+    if missing_tickers(bars, [sector]):
+        return f"no data for {sector}"
+    last = bars["Close"][sector].dropna().index[-1].date()
+    today = datetime.now(MARKET_TIMEZONE).date()
+    if (today - last).days > MAX_STALE_DAYS:
+        return f"latest {sector} price ({last}) is more than {MAX_STALE_DAYS} days old"
+    return None
+
+
+def download_prices(sector: str, holdings: list[str]) -> pd.DataFrame:
+    """Adjusted daily Close, High and Low for the sector ETF and its holdings.
+
+    Retries, with longer and longer waits, when the download fails, comes back
+    empty, or lacks recent prices for the ETF, and raises if it never passes.
+    Holdings that come back without prices get one more try on their own;
+    any still missing after that are left out and reported by the caller.
+    """
+    tickers = [sector, *holdings]
+    attempts = len(RETRY_WAITS) + 1
+    problem = "unknown error"
+    bars = None
+
+    for attempt in range(1, attempts + 1):
         try:
-            raw = yf.download(
-                tickers, start=start, end=end, auto_adjust=True, progress=False
-            )
-            if raw is not None and not raw.empty:
-                if not raw["Close"].dropna(how="all").empty:
-                    return raw[PRICE_FIELDS].dropna(how="all").sort_index()
-            last_error = "download came back empty"
+            bars = fetch_bars(tickers)
+            problem = data_problem(bars, sector)
+            if problem is None:
+                break
         except Exception as exc:  # yfinance raises a variety of error types
-            last_error = f"{type(exc).__name__}: {exc}"
+            problem = f"{type(exc).__name__}: {exc}"
 
-        print(f"Price download attempt {attempt}/{MAX_ATTEMPTS} failed: {last_error}")
-        if attempt < MAX_ATTEMPTS:
-            time.sleep(RETRY_WAIT_SECONDS)
+        print(f"Price download attempt {attempt}/{attempts} failed: {problem}")
+        if attempt == attempts:
+            raise RuntimeError(
+                f"ERROR: price download failed after {attempts} attempts: {problem}. "
+                "No stock table was written."
+            )
+        wait = RETRY_WAITS[attempt - 1]
+        print(f"Waiting {wait} seconds before retrying.")
+        time.sleep(wait)
 
-    raise RuntimeError(
-        f"Price download failed after {MAX_ATTEMPTS} attempts: {last_error}"
-    )
+    missing = missing_tickers(bars, holdings)
+    if missing:
+        wait = RETRY_WAITS[0]
+        print(f"No prices for {', '.join(missing)}; retrying those in {wait} seconds.")
+        time.sleep(wait)
+        try:
+            again = fetch_bars(missing)
+            found = [t for t in missing if not missing_tickers(again, [t])]
+            if found:
+                keep = [c for c in bars.columns if c[1] not in found]
+                extra = again.loc[:, [c for c in again.columns if c[1] in found]]
+                bars = pd.concat([bars[keep], extra], axis=1).sort_index()
+                print(f"Second try found prices for {', '.join(found)}.")
+        except Exception as exc:
+            print(f"Second try failed: {type(exc).__name__}: {exc}")
+    return bars
 
 
 def drop_unfinished_day(prices: pd.DataFrame) -> pd.DataFrame:
@@ -365,10 +420,10 @@ def main() -> int:
         holdings, source = get_holdings(sector)
         print(f"Holdings source: {source}")
         yahoo_tickers = [t.replace(".", "-") for t in holdings["Ticker"]]
-        bars = drop_unfinished_day(download_prices([sector, *yahoo_tickers]))
+        bars = drop_unfinished_day(download_prices(sector, yahoo_tickers))
         prices = bars["Close"]
         if sector not in prices or prices[sector].dropna().empty:
-            raise RuntimeError(f"No price data for {sector} itself.")
+            raise RuntimeError(f"ERROR: no price data for {sector} itself.")
     except (RuntimeError, OSError, KeyError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1

@@ -30,26 +30,26 @@
       "id": "vix_above_20",
       "name": "VIX above 20",
       "on": false,
-      "text": "VIX 17.5, below 20",
+      "text": "VIX 18.7, below 20",
       "values": {
-        "vix": 17.49
+        "vix": 18.7
       }
     },
     {
       "id": "vix_above_vix3m",
       "name": "VIX above 3-month VIX",
       "on": false,
-      "text": "VIX 17.5, below 3-month VIX 19.2",
+      "text": "VIX 18.7, below 3-month VIX 20.1",
       "values": {
-        "vix": 17.49,
-        "vix3m": 19.24
+        "vix": 18.7,
+        "vix3m": 20.06
       }
     }
   ],
   "series_as_of": {
     "spy": "2026-11-12",
     "credit_spread": "2026-11-10",
-    "vix": "2026-11-11",
-    "vix3m": "2026-11-11"
+    "vix": "2026-11-12",
+    "vix3m": "2026-11-12"
   }
 }
